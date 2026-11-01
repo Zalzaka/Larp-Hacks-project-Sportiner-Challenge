@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sportiner Crash Course</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <button class="brand" onclick="goBrand()"><span class="logo">S</span><span>SPORTINER <b>Crash Course</b></span></button>
+      <div id="header-right"></div>
+    </div>
+    <nav id="tabs" class="tabs hidden"></nav>
+  </header>
+
+  <main id="app" class="wrap"></main>
+
+  <footer class="foot">Fictional coaches and demo data. Not a real booking service.</footer>
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- config.local.js is git-ignored. Copy config.example.js to create it. -->
+  <script src="config.local.js"></script>
+  <script src="data.js"></script>
+  <script src="state.js"></script>
+  <script src="ai.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
