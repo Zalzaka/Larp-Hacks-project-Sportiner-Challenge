@@ -26,6 +26,10 @@ async function callClaude({ system, messages, maxTokens = 300 }) {
 
 // ---------- request briefing for the coach ----------
 
+function studentFacts(student) {
+  return `Sport: ${SPORTS[student.sport]}. Current level: ${levelName(student.level)}. Target: level ${Number(student.target).toFixed(1)} within ${timeframeLabel(student.weeks)}. Language: ${student.language}. Location: ${student.location}.`;
+}
+
 function answersToText(answers) {
   const lines = [
     `Skills to develop: ${skillNames(answers.skills)}`,
@@ -33,30 +37,24 @@ function answersToText(answers) {
     `Sessions per week: ${answers.sessions}`,
     `Availability: ${answers.avail}`,
   ];
-  if (answers.competition) lines.push(`Competition: ${answers.competition}${answers.date ? ' on ' + answers.date : ''}`);
   if (answers.notes) lines.push(`Notes: ${answers.notes}`);
   return lines.join('\n');
 }
 
+function urgencyOf(weeks) {
+  return weeks <= 4 ? 'high' : weeks <= 12 ? 'medium' : 'low';
+}
+
 function templateBriefing(student, answers) {
-  let when = 'no fixed deadline';
-  if (answers.date) {
-    const weeks = Math.max(0, Math.floor(daysUntil(answers.date) / 7));
-    when = `${answers.competition || 'a competition'} in ${weeks} week${weeks === 1 ? '' : 's'}`;
-  }
-  const urgency = answers.date ? (daysUntil(answers.date) <= 21 ? 'high' : daysUntil(answers.date) <= 42 ? 'medium' : 'low') : 'low';
-  return `${LEVELS[student.level].label} ${SPORTS[student.sport].toLowerCase()} player (level ${student.level}/5) who wants to work on ${skillNames(answers.skills).toLowerCase()}. Goal: ${answers.goal.toLowerCase()} (${when}). Wants ${answers.sessions} session${answers.sessions === 1 ? '' : 's'} a week, ${answers.avail.toLowerCase()}. Urgency: ${urgency}.`;
+  return `${levelName(student.level)} ${SPORTS[student.sport].toLowerCase()} player aiming for level ${Number(student.target).toFixed(1)} within ${timeframeLabel(student.weeks)}. Wants to work on ${skillNames(answers.skills).toLowerCase()}. Goal: ${answers.goal.toLowerCase()}. Would like ${answers.sessions} session${answers.sessions === 1 ? '' : 's'} a week, ${answers.avail.toLowerCase()}. Urgency: ${urgencyOf(student.weeks)}.`;
 }
 
 async function summariseRequest(student, answers, coach) {
   if (!aiKey()) return { text: templateBriefing(student, answers), source: 'template' };
   try {
     const text = await callClaude({
-      system: 'You write short briefings for sports coaches about a new student request. Write 3 sentences, plain text, concrete and useful. Mention level, what to work on, deadline urgency, and schedule.',
-      messages: [{
-        role: 'user',
-        content: `Coach: ${coach.name} (${coach.sports.join('/')}).\nStudent sport: ${student.sport}, level ${student.level}/5 (${LEVELS[student.level].label}), language ${student.language}.\n${answersToText(answers)}`,
-      }],
+      system: 'You write short briefings for sports coaches about a new student request. Write 3 sentences, plain text, concrete and useful. Mention current level, target level and timeframe, what to work on, and the schedule.',
+      messages: [{ role: 'user', content: `Coach: ${coach.name} (${coach.sports.join('/')}).\n${studentFacts(student)}\n${answersToText(answers)}` }],
       maxTokens: 220,
     });
     return { text, source: 'ai' };
@@ -70,17 +68,15 @@ async function summariseRequest(student, answers, coach) {
 
 function scriptedReply(coach, thread, student, isFirst, lastStudentText) {
   const first = coach.name.split(' ')[0];
+  const skill = SKILLS[thread.answers.skills[0]].toLowerCase();
   if (isFirst) {
-    const a = thread.answers;
-    const skill = SKILLS[a.skills[0]].toLowerCase();
-    const urgent = a.date && daysUntil(a.date) <= 28 ? ` With ${a.competition || 'your event'} coming up, we should start this week.` : '';
-    return `Hi, I'm ${first}! Thanks for the details. ${coach.persona} I'd begin with your ${skill}.${urgent} I can do ${a.avail.toLowerCase()}. Want to lock in a first session?`;
+    const timing = student.weeks <= 12 ? ` Since you want to reach level ${Number(student.target).toFixed(1)} in ${timeframeLabel(student.weeks)}, we should start soon.` : '';
+    return `Hi, I'm ${first}! Thanks for the details. ${coach.persona} I'd begin with your ${skill}.${timing} I can do ${thread.answers.avail.toLowerCase()}. I've put a first drill in your inbox. Want to book a first session?`;
   }
   const text = (lastStudentText || '').toLowerCase();
   if (/price|cost|rate|\$|pay|how much|much|fee|expensive/.test(text)) return `My rate is $${coach.pricePerHour} per hour. Happy to do a shorter first session if you want to try me out.`;
   if (/when|time|schedule|book|available|week|day/.test(text)) return `How about this Thursday evening or Saturday morning? Tell me which works and I'll hold the spot.`;
   if (/thank|great|perfect|sounds good/.test(text)) return `Anytime! See you on court. Bring water and your usual racket.`;
-  const skill = SKILLS[thread.answers.skills[0]].toLowerCase();
   return `Good question. If you can, send me a short video of your ${skill} before our first session and we'll fix the biggest thing first.`;
 }
 
@@ -100,7 +96,7 @@ async function coachReply(coach, thread, student, isFirst, lastStudentText) {
   }
   try {
     const history = [
-      { role: 'user', content: `New student request.\nStudent: ${student.sport}, level ${student.level}/5, language ${student.language}.\n${answersToText(thread.answers)}\nBriefing: ${thread.briefing.text}` },
+      { role: 'user', content: `New student request.\n${studentFacts(student)}\n${answersToText(thread.answers)}\nBriefing: ${thread.briefing.text}` },
       ...thread.messages.map((m) => ({ role: m.from === 'coach' ? 'assistant' : 'user', content: m.text })),
     ];
     const text = await callClaude({
