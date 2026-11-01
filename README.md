@@ -2,18 +2,27 @@
 
 Find a tennis or pickleball coach and get competition-ready fast. Built for the LARP Hacks hackathon, Sportiner subtopic.
 
+> **Branch: `combined`.** Daniel's app is the base, with ideas from ronbilia's `sportiner_app.html` added on top.
+> The two originals are kept untouched on `daniel-original` and `ronbilia-original`.
+
+**Added from ronbilia's app:** Highlight Reels (students post clips), the Recruiter portal (scouts filter athletes and contact them), coach drill dispatch (drills arrive in the student's chat), and the mobile bottom navigation bar. His location search is covered by the coaches board and the Area preference.
+
 ## How it works
 
 **Students**
 1. Choose Tennis or Pickleball, then your level.
 2. Coaches tab: filter by price, language, area, availability, and skill, then pick a coach from the floating board.
 3. Chat tab: your first message is a short questionnaire (skills, goal, competition, schedule). It's turned into an AI briefing the coach sees, along with your profile. After the coach replies, chat freely.
-4. Settings: change sport, level, or language.
+4. Highlights tab: post and watch clips.
+5. Settings: change any answer from the questions at the start.
+
+**Recruiters**
+Pick "I'm a recruiter" to watch student highlight clips, filter by level and sport, and contact athletes.
 
 **Coaches**
 1. Set up a profile and upload a certification.
 2. The certificate is checked before you appear to students.
-3. Coach home shows incoming students, their briefing, and a reply box.
+3. Coach home shows incoming students, their briefing, a reply box, and a "Send drill" button.
 
 Demo tip: you can be both. Register as a coach, switch role to student, find yourself in the Coaches tab, send a request, then switch back to coach to reply.
 

@@ -170,3 +170,30 @@ input[type="range"] { width: 100%; accent-color: var(--neon); }
 
 /* coaches that match every soft preference glow */
 .avatar.match { border-color: var(--neon); box-shadow: 0 0 22px rgba(204, 255, 0, 0.55); }
+
+/* ---------- highlights, recruiter, drills (adapted from ronbilia's app) ---------- */
+.tab { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tiles .tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.clip-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .clip-grid { grid-template-columns: 1fr 1fr; } }
+.clip { padding: 12px; }
+.clip-wrap { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+.clip-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.clip-ph { display: none; position: absolute; inset: 0; place-items: center; text-align: center; color: var(--muted); font-size: 14px; padding: 12px; }
+.clip-wrap.failed video { display: none; }
+.clip-wrap.failed .clip-ph { display: grid; }
+.clip-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; font-size: 12px; color: var(--muted); }
+.clip-stats b { color: var(--text); }
+.drillcard { justify-self: start; max-width: 90%; background: #141a0a; border: 1px solid #3f4a14; border-radius: 14px; padding: 10px 14px; }
+.drillcard.me { justify-self: end; }
+
+/* phone: tabs become a bottom bar like a native app */
+@media (max-width: 600px) {
+  .topbar { backdrop-filter: none; background: var(--bg); }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; max-width: none; margin: 0; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); z-index: 45; }
+  .tab { flex-direction: column; gap: 2px; font-size: 11px; padding: 6px 2px; border-bottom: 0; }
+  .tab .ti { font-size: 20px; }
+  .tab.active { color: var(--neon); }
+  body { padding-bottom: 72px; }
+  .toast { bottom: 84px; }
+}

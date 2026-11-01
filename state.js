@@ -6,6 +6,7 @@ function freshState() {
     student: null, // answers from the onboarding wizard: sport, level, language, area, maxPrice, avail, skill, fastOnly, onboarded
     coach: null, // { name, sports, languages, area, price, avail, specialties, bio, status, certName, reason, source }
     confirmed: [], // coach ids
+    clips: [], // highlight clips posted by the student
     threads: {}, // coachId -> { answers, briefing: {text, source}, messages: [{from, text}] }
     ui: { screen: 'landing', tab: 'coaches', openThread: null, preview: null },
   };

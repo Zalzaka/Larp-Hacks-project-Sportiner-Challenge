@@ -35,3 +35,21 @@ const COACHES = [
   { id: 'p4', name: 'Hana Mori', sports: ['pickleball'], languages: ['English', 'Mandarin'], area: 'Mississauga', pricePerHour: 75, rating: 4.7, specialties: ['serve', 'smash', 'volley'], avail: ['weekdays'], fastTrack: false, bio: 'Tournament-level prep. Works best with five or more weeks.', persona: 'Tournament habits: routines, patterns, and staying calm under pressure.' },
   { id: 'b1', name: 'Alex Kim', sports: ['tennis', 'pickleball'], languages: ['English', 'Russian'], area: 'Toronto', pricePerHour: 70, rating: 4.6, specialties: ['serve', 'volley', 'footwork'], avail: ['evenings', 'weekends'], fastTrack: true, bio: 'Coaches both sports. Ideal if you want to cross-train or switch.', persona: 'Racket skills transfer. I show you what carries over between sports.' },
 ];
+
+// ---------- highlight clips and drills (adapted from ronbilia's Sportiner app) ----------
+
+const CLIPS = [
+  { id: 'c1', player: 'Alex Rivera', sport: 'tennis', level: 4, title: '22-Shot Baseline Topspin Rally', url: 'https://assets.mixkit.co/videos/preview/mixkit-tennis-player-hitting-the-ball-40297-large.mp4', stats: { speed: '112 km/h', accuracy: '94%', length: '45s' }, note: 'Promising forehand wrist snap. Good court positioning under pressure.' },
+  { id: 'c2', player: 'Jordan Lee', sport: 'tennis', level: 5, title: 'Aggressive Overhead Volley Finish', url: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-playing-tennis-40296-large.mp4', stats: { speed: '128 km/h', accuracy: '98%', length: '30s' }, note: 'Exceptional net reach and rapid reaction time.' },
+  { id: 'c3', player: 'Mina Sato', sport: 'pickleball', level: 3, title: 'Kitchen Dink Battle', url: '', stats: { speed: '48 km/h', accuracy: '91%', length: '28s' }, note: 'Patient at the kitchen line. Soft hands and good shot selection.' },
+];
+
+const DRILLS = {
+  serve: { title: 'Toss and target serve', text: 'Hit 50 serves to the deuce box with the same toss height. Then 3 of 5 into each corner.' },
+  forehand: { title: 'Cross-court forehand rally', text: 'Rally 20 balls cross-court, then add one down-the-line shot.' },
+  backhand: { title: 'Backhand turn and hit', text: '30 slow backhand feeds focusing on the shoulder turn. Then 20 cross-court.' },
+  volley: { title: 'Wall volleys', text: '40 volley punches against a wall, keeping the ball low and controlled.' },
+  smash: { title: 'Overhead placement', text: 'Hit 10 smashes to the deep corners and 10 to the body after a lob.' },
+  return: { title: 'Return targets', text: 'Return 15 serves deep to the baseline and 15 short to the net.' },
+  footwork: { title: 'Cone recovery', text: 'Sprint from the center to a corner and recover to ready position in two steps. 10 reps each side.' },
+};

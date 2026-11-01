@@ -70,6 +70,7 @@ function sportLabel(coach) {
 
 function goBrand() {
   if (state.role === 'student') go({ screen: 'home' }); // the flow guard sends unfinished students back to their step
+  else if (state.role === 'recruiter') go({ screen: 'recruiter' });
   else if (state.role === 'coach' && state.coach && state.coach.status === 'verified') go({ screen: 'coachhome' });
   else go({ screen: 'landing' });
 }
@@ -81,14 +82,14 @@ function switchRole() {
 
 function renderShell() {
   const screen = state.ui.screen;
-  const inApp = screen === 'home' || screen === 'coachhome';
+  const inApp = screen === 'home' || screen === 'coachhome' || screen === 'recruiter';
   $('header-right').innerHTML = inApp ? `<button class="link-btn" onclick="switchRole()">Switch role</button>` : '';
 
   const tabs = $('tabs');
   if (screen === 'home') {
     tabs.classList.remove('hidden');
-    tabs.innerHTML = [['coaches', 'Coaches'], ['chat', 'Chat'], ['settings', 'Settings']]
-      .map(([id, label]) => `<button class="tab ${state.ui.tab === id ? 'active' : ''}" onclick="openTab('${id}')">${label}</button>`)
+    tabs.innerHTML = [['coaches', '🧭', 'Coaches'], ['chat', '💬', 'Chat'], ['highlights', '🎬', 'Highlights'], ['settings', '⚙️', 'Settings']]
+      .map(([id, icon, label]) => `<button class="tab ${state.ui.tab === id ? 'active' : ''}" onclick="openTab('${id}')"><span class="ti">${icon}</span><span>${label}</span></button>`)
       .join('');
   } else {
     tabs.classList.add('hidden');
@@ -109,6 +110,8 @@ function enforceFlow() {
     if (!done) ui.screen = 'wizard';
     else if (!s.onboarded) ui.screen = 'ready';
     else ui.screen = 'home';
+  } else if (state.role === 'recruiter') {
+    ui.screen = 'recruiter';
   } else {
     const c = state.coach;
     const verified = c && c.status === 'verified';
@@ -121,7 +124,7 @@ function enforceFlow() {
 function render() {
   enforceFlow();
   renderShell();
-  const views = { landing, wizard, ready, cprofile, ccert, cverify, home, coachhome };
+  const views = { landing, wizard, ready, cprofile, ccert, cverify, home, coachhome, recruiter: recruiterView };
   $('app').innerHTML = (views[state.ui.screen] || landing)();
 
   const box = document.querySelector('[data-scroll-end]');
@@ -137,6 +140,7 @@ function landing() {
     <div class="tiles">
       <button class="tile" onclick="chooseRole('student')"><span class="tile-icon">🎓</span><span class="tile-text"><span class="tile-label">I'm a student</span><span class="tile-desc">Find a coach and start training</span></span></button>
       <button class="tile" onclick="chooseRole('coach')"><span class="tile-icon">🧑‍🏫</span><span class="tile-text"><span class="tile-label">I'm a coach</span><span class="tile-desc">Get verified and meet students</span></span></button>
+      <button class="tile" onclick="chooseRole('recruiter')"><span class="tile-icon">🏫</span><span class="tile-text"><span class="tile-label">I'm a recruiter</span><span class="tile-desc">Scout rising players</span></span></button>
     </div>`;
 }
 
@@ -145,7 +149,9 @@ function chooseRole(role) {
   if (role === 'student') {
     state.student = state.student || {};
     go({ screen: 'home' });
-  } // lands on the first unfinished step
+  } else if (role === 'recruiter') {
+    go({ screen: 'recruiter' });
+  } // students land on the first unfinished step
   else go({ screen: state.coach && state.coach.status === 'verified' ? 'coachhome' : 'cprofile' });
 }
 
@@ -259,6 +265,7 @@ function openTab(id) {
 function home() {
   const tab = state.ui.tab;
   if (tab === 'chat') return chatTab();
+  if (tab === 'highlights') return highlightsTab();
   if (tab === 'settings') return settingsTab();
   return orbitView();
 }
@@ -461,7 +468,9 @@ function briefingCard(thread, coach, viewer) {
 
 function messagesHtml(thread, viewer) {
   const mine = viewer === 'student' ? 'student' : 'coach';
-  return `<div class="msgs">${thread.messages.map((m) => `<div class="msg ${m.from === mine ? 'me' : 'them'}">${esc(m.text)}</div>`).join('')}</div>`;
+  return `<div class="msgs">${thread.messages.map((m) => (m.kind === 'drill'
+    ? `<div class="drillcard ${m.from === mine ? 'me' : ''}"><p class="tiny neon">DRILL</p><p class="h3">${esc(m.title)}</p><p class="small mt1">${esc(m.body)}</p></div>`
+    : `<div class="msg ${m.from === mine ? 'me' : 'them'}">${esc(m.text)}</div>`)).join('')}</div>`;
 }
 
 function threadView(id) {
@@ -508,6 +517,7 @@ async function triggerCoachReply(id, isFirst, lastText) {
   const reply = await coachReply(coach, thread, state.student, isFirst, lastText);
   typingFor = null;
   thread.messages.push({ from: 'coach', text: reply.text });
+  if (isFirst) thread.messages.push(drillMessage(thread.answers.skills[0]));
   saveState();
   render();
 }
@@ -688,6 +698,10 @@ function coachhome() {
       <input id="coach-input" class="input" placeholder="${hasReply ? 'Message…' : 'Reply to this request…'}" autocomplete="off">
       <button class="btn" type="submit">Send</button>
     </form>
+    <form class="chatbar" onsubmit="sendDrill(event)">
+      <select id="drill-pick" class="input">${Object.entries(SKILLS).map(([k, v]) => `<option value="${k}">${v}: ${esc(DRILLS[k].title)}</option>`).join('')}</select>
+      <button class="btn ghost" type="submit">Send drill</button>
+    </form>
     <div data-scroll-end></div>`;
 }
 
@@ -701,6 +715,114 @@ function sendCoachMessage(e) {
   render();
   const next = $('coach-input');
   if (next) next.focus();
+}
+
+// ---------- highlight reels + recruiter portal (adapted from ronbilia's Sportiner app) ----------
+
+let showClipForm = false;
+let recruiterMinLevel = 1;
+let recruiterSport = 'all';
+
+function allClips() {
+  return [...state.clips, ...CLIPS];
+}
+
+function videoBlock(url) {
+  if (!url) return `<div class="clip-wrap failed"><div class="clip-ph">🎬 No video attached</div></div>`;
+  return `<div class="clip-wrap"><video controls preload="metadata" src="${esc(url)}" onerror="this.parentNode.classList.add('failed')"></video><div class="clip-ph">🎬 Video unavailable (offline or blocked link)</div></div>`;
+}
+
+function clipCard(c, forRecruiter) {
+  const player = c.mine ? (forRecruiter ? 'New athlete' : 'You') : c.player;
+  const stats = c.stats
+    ? `<div class="clip-stats"><span>Top speed <b>${esc(c.stats.speed)}</b></span><span>Accuracy <b>${esc(c.stats.accuracy)}</b></span><span>Length <b>${esc(c.stats.length)}</b></span></div>`
+    : '';
+  const contact = forRecruiter
+    ? `<p class="muted small mt2" style="font-style:italic">“${esc(c.note)}”</p><button class="btn small mt2" onclick="contactAthlete('${esc(c.id)}')">Contact athlete</button>`
+    : '';
+  return `<article class="card clip">${videoBlock(c.url)}
+    <div class="row between mt2"><div><h3 class="h3">${esc(c.title)}</h3><p class="muted small">${esc(player)} · Level ${c.level} · ${SPORTS[c.sport]}</p></div>${c.mine && !forRecruiter ? '<span class="pill">YOURS</span>' : ''}</div>
+    ${stats}${contact}</article>`;
+}
+
+function highlightsTab() {
+  const s = state.student;
+  const clips = allClips().filter((c) => c.sport === s.sport);
+  return `
+    <div class="row between"><h2 class="h2">Highlight reels</h2>
+      <button class="btn small inline" onclick="toggleClipForm()">${showClipForm ? 'Cancel' : '+ Post a clip'}</button></div>
+    <p class="muted mt1">Show off your progress. Recruiters and coaches can watch your clips.</p>
+    ${showClipForm ? clipForm() : ''}
+    <div class="clip-grid mt3">${clips.length ? clips.map((c) => clipCard(c, false)).join('') : '<p class="muted">No clips yet. Post the first one.</p>'}</div>`;
+}
+
+function clipForm() {
+  return `
+    <form class="card form mt2" onsubmit="postClip(event)">
+      <label class="field"><span class="lbl">Title</span><input name="ctitle" class="input" placeholder="e.g. 18-shot forehand rally" required></label>
+      <label class="field"><span class="lbl">Video link (optional)</span><input name="curl" class="input" placeholder="https://…"></label>
+      <p id="clip-error" class="error hidden"></p>
+      <button class="btn" type="submit">Post clip</button>
+    </form>`;
+}
+
+function toggleClipForm() {
+  showClipForm = !showClipForm;
+  render();
+}
+
+function postClip(e) {
+  e.preventDefault();
+  const f = e.target;
+  const url = f.curl.value.trim();
+  if (url && !/^https?:\/\//i.test(url)) return showError('clip-error', 'The video link must start with http:// or https://');
+  const s = state.student;
+  state.clips.unshift({ id: 'u' + Date.now().toString(36), player: 'You', sport: s.sport, level: s.level, title: f.ctitle.value.trim(), url, stats: null, note: 'Newly posted by the athlete.', mine: true });
+  showClipForm = false;
+  saveState();
+  toast('Clip posted');
+  render();
+}
+
+function recruiterView() {
+  const list = allClips().filter((c) => c.level >= recruiterMinLevel && (recruiterSport === 'all' || c.sport === recruiterSport));
+  return `
+    <h2 class="h2">Scout athlete talent</h2>
+    <p class="muted mt1">Watch highlight clips and contact promising players.</p>
+    <div class="grid2 mt3">
+      <label class="field"><span class="lbl">Minimum level</span>
+        <select class="input" onchange="setRecruiterFilter('level', this.value)">${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${n === recruiterMinLevel ? 'selected' : ''}>Level ${n}+ · ${LEVELS[n].label}</option>`).join('')}</select></label>
+      <label class="field"><span class="lbl">Sport</span>
+        <select class="input" onchange="setRecruiterFilter('sport', this.value)"><option value="all">All sports</option>${Object.entries(SPORTS).map(([k, v]) => `<option value="${k}" ${k === recruiterSport ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    </div>
+    <div class="clip-grid mt3">${list.length ? list.map((c) => clipCard(c, true)).join('') : '<p class="muted">No athletes match those filters.</p>'}</div>`;
+}
+
+function setRecruiterFilter(kind, value) {
+  if (kind === 'level') recruiterMinLevel = Number(value);
+  else recruiterSport = value;
+  render();
+}
+
+function contactAthlete(id) {
+  const c = allClips().find((x) => x.id === id);
+  if (!c) return;
+  toast(c.mine ? 'This is a clip you posted as a student.' : `Message sent to ${c.player}`);
+}
+
+// ---------- coach drills (adapted from ronbilia's drill dispatch) ----------
+
+function drillMessage(skill) {
+  const d = DRILLS[skill];
+  return { from: 'coach', kind: 'drill', title: `${SKILLS[skill]}: ${d.title}`, body: d.text, text: `Drill, ${SKILLS[skill]}: ${d.title}. ${d.text}` };
+}
+
+function sendDrill(e) {
+  e.preventDefault();
+  state.threads.me.messages.push(drillMessage($('drill-pick').value));
+  saveState();
+  render();
+  toast('Drill sent to your student');
 }
 
 // ---------- boot ----------
