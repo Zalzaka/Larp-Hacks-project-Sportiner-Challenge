@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sportiner - Player Development, Coaching & Recruitment</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080c14;
+            color: #f3f4f6;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-16 sm:pb-0 selection:bg-emerald-500 selection:text-black">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('search')">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-slate-950 text-lg shadow-md">
+                    S9
+                </div>
+                <div>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="font-black text-base tracking-tight text-white">SPORTINER</span>
+                        <span id="role-badge" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Student</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth & Account Actions -->
+            <div class="flex items-center space-x-3">
+                <div id="user-display" class="hidden sm:flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+                    <i class="fa-solid fa-circle-user text-emerald-400"></i>
+                    <span id="user-email-text" class="font-medium text-slate-200">user@example.com</span>
+                </div>
+                <button onclick="openAuthModal()" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow transition">
+                    <i class="fa-solid fa-user-plus mr-1"></i><span id="auth-btn-text">Sign In / Switch</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Bar (Desktop & Tablet) -->
+    <nav class="hidden sm:block bg-slate-950 border-b border-slate-800 px-4 py-2">
+        <div class="max-w-5xl mx-auto flex items-center justify-center space-x-2 text-xs font-semibold">
+            <button onclick="navigateTo('search')" id="nav-search" class="nav-item px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-magnifying-glass mr-1.5"></i>Find Coaches
+            </button>
+            <button onclick="navigateTo('inbox')" id="nav-inbox" class="nav-item px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition relative">
+                <i class="fa-solid fa-inbox mr-1.5"></i>Student Inbox
+                <span id="inbox-count-badge" class="ml-1 bg-emerald-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">2</span>
+            </button>
+            <button onclick="navigateTo('showcase')" id="nav-showcase" class="nav-item px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-circle-play mr-1.5"></i>Highlight Reels
+            </button>
+            <button onclick="navigateTo('recruiter')" id="nav-recruiter" class="nav-item px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-graduation-cap mr-1.5"></i>Recruiter Portal
+            </button>
+            <button onclick="navigateTo('coach-panel')" id="nav-coach-panel" class="nav-item px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-clipboard-user mr-1.5"></i>Coach Panel
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main View Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 sm:p-6">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: FORMAL ONBOARDING & SEARCH         -->
+        <!-- ========================================== -->
+        <section id="view-search" class="app-view space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
+                <div class="border-b border-slate-800 pb-4">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Find Verified Tennis & Pickleball Coaches</h1>
+                    <p class="text-xs text-slate-400 mt-1">Set your location and target skill goal to match with qualified trainers in your area.</p>
+                </div>
+
+                <form onsubmit="handleSearchSubmit(event)" class="space-y-5">
+                    <!-- Location & Distance Radius -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold uppercase text-slate-300">Your Location / Postal Code</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-location-dot absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                                <input type="text" id="search-location" value="Toronto, ON (Downtown)" placeholder="City or Postal Code" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold uppercase text-slate-300">Max Radius Distance</label>
+                            <select id="search-radius" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                <option value="5">Within 5 km</option>
+                                <option value="15" selected>Within 15 km</option>
+                                <option value="30">Within 30 km</option>
+                                <option value="50">Within 50 km (Greater Area)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sport & Target Level -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold uppercase text-slate-300">Sport</label>
+                            <select id="search-sport" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                <option value="Tennis">Tennis</option>
+                                <option value="Pickleball">Pickleball</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold uppercase text-slate-300">Target Level Goal</label>
+                            <select id="search-target-level" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                <option value="Level 3.0 Intermediate">Level 3.0 Intermediate</option>
+                                <option value="Level 4.0 Advanced">Level 4.0 Advanced</option>
+                                <option value="Level 5.0 Competitive / Collegiate">Level 5.0 Competitive / Collegiate</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold uppercase text-slate-300">Target Goal Date</label>
+                            <input type="date" id="search-target-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold rounded-xl shadow-lg transition text-xs flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>SEARCH MATCHED COACHES</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Matched Coaches Results -->
+            <div id="coach-results-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Injected dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: STUDENT INBOX & COMMUNICATIONS    -->
+        <!-- ========================================== -->
+        <section id="view-inbox" class="app-view hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-xl font-black text-white">Student Training Inbox</h2>
+                        <p class="text-xs text-slate-400">Receive custom drills, technical notes, and match feedback directly from your coach.</p>
+                    </div>
+                    <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-full">
+                        Active Coach: Marcus Vance
+                    </span>
+                </div>
+
+                <div id="inbox-messages-list" class="space-y-4">
+                    <!-- Injected dynamically via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: STRAVA-STYLE HIGHLIGHT SHOWCASE    -->
+        <!-- ========================================== -->
+        <section id="view-showcase" class="app-view hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-xl">
+                <div>
+                    <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Recruiter Feed</span>
+                    <h2 class="text-2xl font-black text-white mt-1">Player Highlight Reels</h2>
+                    <p class="text-xs text-slate-400">Upload court performance clips for university recruiters and club scouts.</p>
+                </div>
+                <button onclick="openUploadHighlightModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-plus"></i><span>Upload Highlight Clip</span>
+                </button>
+            </div>
+
+            <div id="showcase-feed" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Injected dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 4: UNIVERSITY RECRUITER PORTAL       -->
+        <!-- ========================================== -->
+        <section id="view-recruiter" class="app-view hidden space-y-6">
+            <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 border border-indigo-500/30 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-full">
+                            COLLEGIATE & CLUB RECRUITING
+                        </span>
+                        <h2 class="text-2xl font-black text-white mt-2">Scout Athlete Talent</h2>
+                        <p class="text-xs text-slate-400">Filter rising players by target level, evaluate match highlights, and contact prospective athletes.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <select id="recruiter-filter-level" onchange="renderRecruiterPortal()" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs px-3 py-2 rounded-xl focus:outline-none">
+                        <option value="ALL">All Levels</option>
+                        <option value="Level 4.0 Advanced">Level 4.0 Advanced</option>
+                        <option value="Level 5.0 Competitive / Collegiate">Level 5.0 Competitive</option>
+                    </select>
+                    <select id="recruiter-filter-sport" onchange="renderRecruiterPortal()" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs px-3 py-2 rounded-xl focus:outline-none">
+                        <option value="ALL">All Sports</option>
+                        <option value="Tennis">Tennis</option>
+                        <option value="Pickleball">Pickleball</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="recruiter-athletes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Injected dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 5: COACH ROSTER & DRILL DISPATCH      -->
+        <!-- ========================================== -->
+        <section id="view-coach-panel" class="app-view hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-xl font-black text-white">Coach Roster Management</h2>
+                        <p class="text-xs text-slate-400">Manage assigned students and dispatch custom drills to their student inbox.</p>
+                    </div>
+                    <span class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1 rounded-lg">Active Roster: 3</span>
+                </div>
+
+                <div id="coach-student-tabs-v3" class="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
+                    <!-- Injected dynamically -->
+                </div>
+
+                <div id="coach-active-student-panel" class="space-y-6">
+                    <!-- Injected dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile Native App Look) -->
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center px-2 py-2 text-[10px] font-semibold text-slate-400">
+        <button onclick="navigateTo('search')" id="mob-nav-search" class="flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-magnifying-glass text-base"></i>
+            <span>Search</span>
+        </button>
+        <button onclick="navigateTo('inbox')" id="mob-nav-inbox" class="flex flex-col items-center space-y-1 relative">
+            <i class="fa-solid fa-inbox text-base"></i>
+            <span>Inbox</span>
+            <span class="absolute -top-1 right-2 bg-emerald-500 text-slate-950 font-bold w-4 h-4 rounded-full flex items-center justify-center text-[9px]">2</span>
+        </button>
+        <button onclick="navigateTo('showcase')" id="mob-nav-showcase" class="flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-circle-play text-base"></i>
+            <span>Highlights</span>
+        </button>
+        <button onclick="navigateTo('recruiter')" id="mob-nav-recruiter" class="flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-graduation-cap text-base"></i>
+            <span>Recruiter</span>
+        </button>
+        <button onclick="navigateTo('coach-panel')" id="mob-nav-coach-panel" class="flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-clipboard-user text-base"></i>
+            <span>Coach</span>
+        </button>
+    </nav>
+
+    <!-- AUTH & ROLE SELECTION MODAL -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-base">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="space-y-1 text-center">
+                <h3 class="text-xl font-black text-white">Sign In to Sportiner</h3>
+                <p class="text-xs text-slate-400">Select your role to access customized dashboards.</p>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div class="space-y-1 text-left">
+                    <label class="text-xs font-bold uppercase text-slate-300">Email Address</label>
+                    <input type="email" id="auth-email" required value="athlete@sportiner.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="space-y-1 text-left">
+                    <label class="text-xs font-bold uppercase text-slate-300">Select Account Role</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="auth_role" value="Student" checked class="peer hidden">
+                            <div class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/30 text-center text-xs font-semibold text-slate-300 peer-checked:text-white transition">
+                                <i class="fa-solid fa-user-graduate block mb-1 text-emerald-400"></i>Student
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="auth_role" value="Coach" class="peer hidden">
+                            <div class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/30 text-center text-xs font-semibold text-slate-300 peer-checked:text-white transition">
+                                <i class="fa-solid fa-chalkboard-user block mb-1 text-emerald-400"></i>Coach
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="auth_role" value="Recruiter" class="peer hidden">
+                            <div class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 peer-checked:border-indigo-500 peer-checked:bg-indigo-950/30 text-center text-xs font-semibold text-slate-300 peer-checked:text-white transition">
+                                <i class="fa-solid fa-building-columns block mb-1 text-indigo-400"></i>Recruiter
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow transition">
+                    CONFIRM & SIGN IN
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- UPLOAD HIGHLIGHT MODAL -->
+    <div id="upload-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl relative">
+            <button onclick="closeUploadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-lg font-black text-white">Post Highlight Clip</h3>
+            <form onsubmit="handleUploadSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-300 uppercase">Title / Rally Name</label>
+                    <input type="text" id="upload-title" required placeholder="e.g. 18-Shot Forehand Rally" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-300 uppercase">Video URL (or Mock Video)</label>
+                    <input type="text" id="upload-url" placeholder="https://..." value="https://assets.mixkit.co/videos/preview/mixkit-tennis-player-hitting-the-ball-40297-large.mp4" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs rounded-xl shadow transition">
+                    POST TO RECRUITER FEED
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global App Toast -->
+    <div id="toast" class="fixed bottom-16 sm:bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <div id="toast-icon" class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-xs">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <div id="toast-title" class="text-xs font-bold text-white">Notification</div>
+            <div id="toast-message" class="text-[11px] text-slate-300">Updated state successfully.</div>
+        </div>
+    </div>
+
+    <script>
+        /* ----------------------------------------------------
+           DATA & STATE
+        ---------------------------------------------------- */
+        const HIGHLIGHT_CLIPS = [
+            {
+                id: 'clip-1',
+                playerName: 'Alex Rivera',
+                sport: 'Tennis',
+                targetLevel: 'Level 4.0 Advanced',
+                title: '22-Shot Baseline Topspin Rally',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-tennis-player-hitting-the-ball-40297-large.mp4',
+                stats: { topSpeed: '112 km/h', duration: '45s', accuracy: '94%' },
+                recruiterNotes: 'Promising forehand wrist snap. Good court positioning under pressure.'
+            },
+            {
+                id: 'clip-2',
+                playerName: 'Jordan Lee',
+                sport: 'Tennis',
+                targetLevel: 'Level 5.0 Competitive',
+                title: 'Aggressive Overhead Volley Finish',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-playing-tennis-40296-large.mp4',
+                stats: { topSpeed: '128 km/h', duration: '30s', accuracy: '98%' },
+                recruiterNotes: 'Exceptional net reach and rapid reaction time.'
+            }
+        ];
+
+        let appStateV3 = {
+            userEmail: 'athlete@sportiner.com',
+            userRole: 'Student',
+            searchLocation: 'Toronto, ON (Downtown)',
+            searchRadius: '15',
+            sport: 'Tennis',
+            targetLevel: 'Level 4.0 Advanced',
+            targetDate: getFutureDateString(30),
+            inboxMessages: [
+                { id: 'm1', from: 'Marcus Vance (Coach)', date: 'Today at 10:15 AM', text: 'Hey Alex, reviewed your last clip. Added 30 deep crosscourt reps to your schedule.' },
+                { id: 'm2', from: 'University Scout', date: 'Yesterday', text: 'Impressed by your baseline consistency in the highlight reel! Are you open to scout evaluation?' }
+            ]
+        };
+
+        function getFutureDateString(days) {
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return d.toISOString().split('T')[0];
+        }
+
+        /* ----------------------------------------------------
+           NAVIGATION & AUTH
+        ---------------------------------------------------- */
+        function navigateTo(viewId) {
+            document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+            const target = document.getElementById(`view-${viewId}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'font-bold');
+            });
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) activeNav.classList.add('bg-emerald-500/20', 'text-emerald-400', 'font-bold');
+
+            if (viewId === 'inbox') renderInbox();
+            if (viewId === 'showcase') renderShowcase();
+            if (viewId === 'recruiter') renderRecruiterPortal();
+            if (viewId === 'coach-panel') renderCoachPanelV3();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const role = document.querySelector('input[name="auth_role"]:checked').value;
+            
+            appStateV3.userEmail = email;
+            appStateV3.userRole = role;
+
+            document.getElementById('role-badge').innerText = role;
+            document.getElementById('user-email-text').innerText = email;
+            document.getElementById('user-display').classList.remove('hidden');
+
+            closeAuthModal();
+            showToast('Signed In', `Welcome back as ${role}`);
+
+            if (role === 'Coach') navigateTo('coach-panel');
+            else if (role === 'Recruiter') navigateTo('recruiter');
+            else navigateTo('inbox');
+        }
+
+        /* ----------------------------------------------------
+           RENDER INBOX & RECRUITER PORTAL
+        ---------------------------------------------------- */
+        function renderInbox() {
+            const container = document.getElementById('inbox-messages-list');
+            container.innerHTML = appStateV3.inboxMessages.map(msg => `
+                <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-emerald-400">${msg.from}</span>
+                        <span class="text-[10px] text-slate-500">${msg.date}</span>
+                    </div>
+                    <p class="text-xs text-slate-200 leading-relaxed">${msg.text}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderShowcase() {
+            const container = document.getElementById('showcase-feed');
+            container.innerHTML = HIGHLIGHT_CLIPS.map(clip => `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl space-y-3">
+                    <div class="relative bg-black aspect-video flex items-center justify-center">
+                        <video src="${clip.videoUrl}" controls class="w-full h-full object-cover"></video>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-extrabold text-white text-base">${clip.title}</h4>
+                                <div class="text-xs text-slate-400">${clip.playerName} • ${clip.targetLevel}</div>
+                            </div>
+                            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">${clip.sport}</span>
+                        </div>
+                        <div class="flex space-x-3 text-[11px] text-slate-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <div>Top Speed: <strong class="text-white">${clip.stats.topSpeed}</strong></div>
+                            <div>Accuracy: <strong class="text-white">${clip.stats.accuracy}</strong></div>
+                            <div>Length: <strong class="text-white">${clip.stats.duration}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRecruiterPortal() {
+            const container = document.getElementById('recruiter-athletes-grid');
+            container.innerHTML = HIGHLIGHT_CLIPS.map(clip => `
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 shadow-xl">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-black text-white text-lg">${clip.playerName}</h4>
+                            <div class="text-xs text-indigo-400 font-bold">${clip.targetLevel}</div>
+                        </div>
+                        <button onclick="showToast('Contact Sent', 'Direct message sent to ${clip.playerName}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow">
+                            Contact Athlete
+                        </button>
+                    </div>
+                    <div class="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">Recruiter Assessment</div>
+                        <p class="mt-0.5 italic text-slate-200">"${clip.recruiterNotes}"</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleSearchSubmit(e) {
+            e.preventDefault();
+            showToast('Coaches Updated', 'Filtered coaches by distance and target level.');
+        }
+
+        function openUploadHighlightModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
+        function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); }
+
+        function handleUploadSubmit(e) {
+            e.preventDefault();
+            HIGHLIGHT_CLIPS.unshift({
+                id: `clip-${Date.now()}`,
+                playerName: 'Alex Rivera',
+                sport: 'Tennis',
+                targetLevel: 'Level 4.0 Advanced',
+                title: document.getElementById('upload-title').value,
+                videoUrl: document.getElementById('upload-url').value,
+                stats: { topSpeed: '115 km/h', duration: '35s', accuracy: '95%' },
+                recruiterNotes: 'Newly posted athlete rally video.'
+            });
+            closeUploadModal();
+            showToast('Posted!', 'Highlight clip posted to recruiter showcase.');
+            renderShowcase();
+        }
+
+        window.addEventListener('load', () => {
+            document.getElementById('search-target-date').value = getFutureDateString(30);
+        });
+    </script>
+</body>
+</html>
