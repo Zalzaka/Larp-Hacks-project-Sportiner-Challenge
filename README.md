@@ -69,7 +69,7 @@ Everything works without a key. With a key, the AI upgrades three things:
 
 To turn it on locally, copy `config.example.js` to `config.local.js` and paste your Anthropic API key. `config.local.js` is git-ignored. The key is used from the browser, so anyone who opens the page can see it. Fine for a local demo, never put a real key on a public site. The deployed version runs without a key.
 
-On a deployed site the browser may log a harmless "404" for `config.local.js`, because that file is deliberately not in the repository.
+`config.local.js` is deliberately not in the repository. On Render, `render.yaml` serves the empty `config.example.js` in its place. If you open a fresh clone locally without creating `config.local.js`, the browser logs one harmless 404 for it and the app works as normal.
 
 ## Files
 
