@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sportiner: Crash Course - LARP Your Way Into Competitions</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        },
+                        court: {
+                            green: '#0f382c',
+                            blue: '#1e3a8a',
+                            accent: '#ccff00', // Tennis ball neon yellow/green
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f17;
+            color: #f3f4f6;
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.25);
+        }
+        .neon-text {
+            color: #ccff00;
+        }
+        .neon-bg {
+            background-color: #ccff00;
+            color: #0b0f17;
+        }
+        /* Hide scrollbars for slick look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-lime-400 selection:text-black">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('onboarding')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg">
+                    S9
+                </div>
+                <div>
+                    <div class="flex items-center space-x-1">
+                        <span class="font-extrabold text-lg tracking-tight text-white">SPORTINER</span>
+                        <span class="bg-lime-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">CRASH COURSE</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 font-medium">Fake It 'Til You Win It</p>
+                </div>
+            </div>
+
+            <!-- View Switcher & Quick Actions -->
+            <div class="flex items-center space-x-2">
+                <!-- Mode Toggle (Player / Coach) -->
+                <div class="bg-slate-800 p-1 rounded-lg flex items-center border border-slate-700">
+                    <button id="btn-mode-player" onclick="setMode('player')" class="px-3 py-1 rounded-md text-xs font-semibold transition-all bg-emerald-500 text-white shadow">
+                        <i class="fa-solid fa-user-ninja mr-1.5"></i>Player
+                    </button>
+                    <button id="btn-mode-coach" onclick="setMode('coach')" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-clipboard-user mr-1.5"></i>Coach View
+                    </button>
+                </div>
+
+                <!-- Reset Demo Button -->
+                <button onclick="resetDemoState()" title="Reset Hackathon Demo Data" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-amber-400 rounded-lg border border-slate-700 transition">
+                    <i class="fa-solid fa-rotate-left text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar for Screens (Player Mode Only) -->
+    <nav id="player-nav" class="bg-slate-950 border-b border-slate-800/80 px-4 py-2">
+        <div class="max-w-6xl mx-auto flex items-center justify-start sm:justify-center space-x-1 sm:space-x-4 overflow-x-auto no-scrollbar text-xs font-medium">
+            <button onclick="navigateTo('onboarding')" id="nav-onboarding" class="nav-item px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 transition whitespace-nowrap">
+                <i class="fa-solid fa-sliders"></i><span>1. Goal Setup</span>
+            </button>
+            <button onclick="navigateTo('coaches')" id="nav-coaches" class="nav-item px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 transition whitespace-nowrap">
+                <i class="fa-solid fa-user-tie"></i><span>2. Coach Finder</span>
+            </button>
+            <button onclick="navigateTo('plan')" id="nav-plan" class="nav-item px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 transition whitespace-nowrap relative">
+                <i class="fa-solid fa-calendar-check"></i><span>3. LARP Plan</span>
+                <span id="plan-badge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-lime-400 rounded-full animate-ping"></span>
+            </button>
+            <button onclick="navigateTo('tournaments')" id="nav-tournaments" class="nav-item px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 transition whitespace-nowrap">
+                <i class="fa-solid fa-trophy"></i><span>4. Tournament Hub</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Dynamic Content Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 sm:p-6">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: ONBOARDING & GOAL SETTING          -->
+        <!-- ========================================== -->
+        <section id="view-onboarding" class="app-view max-w-2xl mx-auto space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center space-x-2 bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>HACKATHON MAIN TRACK: LARP AS A PRO</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    Fast-Track Into Tournaments
+                </h1>
+                <p class="text-slate-400 text-sm max-w-lg mx-auto">
+                    Never played in a competition before? We pair you with specialized coaches who teach you the drills, strategy, and on-court persona to step in looking like a pro.
+                </p>
+            </div>
+
+            <form id="onboarding-form" onsubmit="handleOnboardingSubmit(event)" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
+                <!-- Sport Selection -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Select Your Sport</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="sport" value="Tennis" class="peer hidden" checked>
+                            <div class="p-4 rounded-xl border border-slate-700 bg-slate-800/50 peer-checked:border-lime-400 peer-checked:bg-lime-950/20 text-center transition">
+                                <i class="fa-solid fa-table-tennis-paddle-ball text-2xl mb-2 text-lime-400"></i>
+                                <div class="font-bold text-white text-sm">Tennis</div>
+                                <div class="text-[11px] text-slate-400">Singles & Doubles</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="sport" value="Pickleball" class="peer hidden">
+                            <div class="p-4 rounded-xl border border-slate-700 bg-slate-800/50 peer-checked:border-lime-400 peer-checked:bg-lime-950/20 text-center transition">
+                                <i class="fa-solid fa-table-tennis-paddle-ball text-2xl mb-2 text-emerald-400"></i>
+                                <div class="font-bold text-white text-sm">Pickleball</div>
+                                <div class="text-[11px] text-slate-400">Dink & Drive</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Current Skill Level -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Current Self-Assessed Skill Level</label>
+                        <span id="skill-display" class="text-xs font-bold text-lime-400 bg-slate-800 px-2 py-0.5 rounded">Level 2: Casual Hitter</span>
+                    </div>
+                    <input type="range" min="1" max="5" value="2" id="input-skill" oninput="updateSkillLabel(this.value)" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-lime-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 font-semibold px-1">
+                        <span>1: Total Rookie</span>
+                        <span>3: Weekend Warrior</span>
+                        <span>5: Club Competitor</span>
+                    </div>
+                </div>
+
+                <!-- Event Countdown / Goal Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Target Tournament Date</label>
+                        <input type="date" id="input-date" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-lime-400">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Training Frequency</label>
+                        <select id="input-frequency" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-lime-400">
+                            <option value="2">2 sessions / week (Standard)</option>
+                            <option value="3" selected>3 sessions / week (Fast-Track)</option>
+                            <option value="4">4+ sessions / week (Ultra LARP Bootcamp)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Hourly Budget Slider -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Max Coach Budget ($/hr)</label>
+                        <span id="budget-display" class="text-xs font-bold text-lime-400 bg-slate-800 px-2 py-0.5 rounded">$80 / hr</span>
+                    </div>
+                    <input type="range" min="40" max="150" step="10" value="80" id="input-budget" oninput="updateBudgetLabel(this.value)" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-lime-400">
+                </div>
+
+                <!-- Target LARP Persona Selection -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Choose Your On-Court Persona Focus</label>
+                    <select id="input-persona" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-lime-400">
+                        <option value="baseliner">The Cold-Blooded Baseliner (Unshakable consistency & swagger)</option>
+                        <option value="smasher">The Aggressive Net Specialist (Intimidating volleys & loud calls)</option>
+                        <option value="tactician">The Psychological Chessmaster (Deep court awareness & mind games)</option>
+                        <option value="showman">The Energetic Crowd-Pleaser (Spin shots, stylish routines, high energy)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-lime-400 hover:from-emerald-400 hover:to-lime-300 text-slate-950 font-extrabold rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center space-x-2 text-base">
+                    <span>MATCH ME WITH COMP-LARP COACHES</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: COACH MATCHMAKING & FINDER         -->
+        <!-- ========================================== -->
+        <section id="view-coaches" class="app-view hidden space-y-6">
+            <!-- Filter & Status Header -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>Matched Comp Coaches</span>
+                        <span id="results-count-badge" class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30">6 Available</span>
+                    </h2>
+                    <p class="text-xs text-slate-400" id="match-summary-text">Showing coaches tailored for your target tournament setup.</p>
+                </div>
+
+                <!-- Quick Filters -->
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <select id="filter-sport" onchange="renderCoachList()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
+                        <option value="ALL">All Sports</option>
+                        <option value="Tennis">Tennis Only</option>
+                        <option value="Pickleball">Pickleball Only</option>
+                    </select>
+                    <select id="filter-sort" onchange="renderCoachList()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
+                        <option value="score">Best LARP Fit Match</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="rating">Highest Rated</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Coach Grid -->
+            <div id="coach-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Seeded dynamically via JS -->
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: COACH DETAIL & BOOKING             -->
+        <!-- ========================================== -->
+        <section id="view-booking" class="app-view hidden max-w-3xl mx-auto space-y-6">
+            <button onclick="navigateTo('coaches')" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1.5">
+                <i class="fa-solid fa-chevron-left"></i><span>Back to Coach Matchmaking</span>
+            </button>
+
+            <div id="booking-coach-detail" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
+                <!-- Dynamic Content injected by JS -->
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 4: MY CRASH COURSE PLAN               -->
+        <!-- ========================================== -->
+        <section id="view-plan" class="app-view hidden space-y-6">
+            <!-- Plan Overview Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-emerald-500/10 text-9xl font-black select-none pointer-events-none">S9</div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="space-y-2">
+                        <div class="inline-flex items-center space-x-2 bg-lime-400 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded uppercase tracking-widest">
+                            ACTIVE LARP PROTOCOL
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight" id="plan-title">
+                            The Baseliner Crash Course
+                        </h2>
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-user-tie text-emerald-400"></i> Coach: <strong id="plan-coach-name">Coach Marcus</strong></span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-trophy text-amber-400"></i> Target: <strong id="plan-target-event">Toronto Open Amateur</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Countdown Stat Box -->
+                    <div class="bg-slate-900/80 border border-slate-700/80 p-4 rounded-xl text-center min-w-[160px]">
+                        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Days Until Comp</div>
+                        <div class="text-3xl font-black text-lime-400 my-0.5" id="plan-countdown">21</div>
+                        <div class="text-[11px] text-emerald-400 font-semibold" id="plan-weeks-text">3 Week Fast-Track</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Persona Mandate Banner -->
+            <div class="bg-slate-900 border-l-4 border-lime-400 rounded-r-xl p-4 flex items-start space-x-3 shadow-lg">
+                <i class="fa-solid fa-masks-theater text-lime-400 text-xl mt-0.5"></i>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Assigned On-Court Identity</h4>
+                    <p class="text-sm font-semibold text-white mt-0.5" id="plan-persona-mantra">
+                        "Act like every ball hit to your baseline is an insult. Keep deep length, never look rushed, and walk between points like you own the court."
+                    </p>
+                </div>
+            </div>
+
+            <!-- Schedule Header & Progress -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                <div>
+                    <h3 class="text-lg font-extrabold text-white">Day-by-Day Training Schedule</h3>
+                    <p class="text-xs text-slate-400">Check off completed drills to update your coach in real-time.</p>
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-full sm:w-64 space-y-1">
+                    <div class="flex justify-between text-xs font-bold">
+                        <span class="text-slate-400">Preparation Progress</span>
+                        <span class="text-lime-400" id="progress-percent">0%</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-emerald-500 to-lime-400 transition-all duration-500 w-0"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Drill Schedule Cards -->
+            <div id="plan-drills-container" class="space-y-4">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 5: TOURNAMENT HUB                     -->
+        <!-- ========================================== -->
+        <section id="view-tournaments" class="app-view hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <div class="inline-block text-xs font-bold text-lime-400 bg-lime-950/40 border border-lime-500/30 px-3 py-1 rounded-full mb-2">
+                            TORONTO & GTA COMPETITION FEED
+                        </div>
+                        <h2 class="text-2xl font-black text-white">Upcoming Public Tournaments</h2>
+                        <p class="text-xs text-slate-400">Ready to test your LARP persona? Register directly into amateur brackets.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-xs font-bold text-slate-300">Live Registration Open</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tournaments List Grid -->
+            <div id="tournaments-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Injected dynamically via JS -->
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 6: COACH DASHBOARD (COACH MODE)       -->
+        <!-- ========================================== -->
+        <section id="view-coach-dashboard" class="app-view hidden space-y-6">
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <span class="bg-indigo-500/20 text-indigo-300 text-xs font-bold px-3 py-1 rounded-full border border-indigo-500/30">
+                            COACH PORTAL
+                        </span>
+                        <h2 class="text-2xl font-black text-white mt-2">Crash Course Roster</h2>
+                        <p class="text-xs text-slate-400">Manage your active LARP students, verify drill completion, and update tournament readiness notes.</p>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-700 px-4 py-2 rounded-xl text-center">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Active Students</div>
+                        <div class="text-xl font-bold text-indigo-400" id="coach-active-count">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booked Students List -->
+            <div id="coach-students-list" class="space-y-4">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Global App Toast Notification Container -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <div id="toast-icon" class="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <div id="toast-title" class="text-xs font-bold text-white">Notification</div>
+            <div id="toast-message" class="text-[11px] text-slate-300">Action performed successfully.</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800/80 py-6 px-4 text-center text-xs text-slate-500">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-slate-400">Sportiner Crash Course</span>
+                <span>•</span>
+                <span>Built for Hackathon Demo</span>
+            </div>
+            <div class="text-[11px] text-slate-500">
+                Main Track Theme: <em class="text-slate-400">"LARP as someone you are not"</em>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ========================================== -->
+    <!-- APPLICATION LOGIC & SEEDED DATA            -->
+    <!-- ========================================== -->
+    <script>
+        /* ----------------------------------------------------
+           1. SEEDED DATA
+        ---------------------------------------------------- */
+        const SEEDED_COACHES = [
+            {
+                id: 'coach-1',
+                name: 'Marcus Vance',
+                avatar: 'MV',
+                sport: 'Tennis',
+                rating: 4.9,
+                reviewsCount: 38,
+                hourlyRate: 85,
+                specialty: 'Baseline Dominance & Mental Swagger',
+                fastTrackCapable: true,
+                bio: 'Former Division 1 player specializing in taking casual players and molding their groundstrokes and court body language for tournament play in under 4 weeks.',
+                availableSlots: ['Tomorrow at 4:00 PM', 'Thursday at 6:30 PM', 'Saturday at 10:00 AM'],
+                larpFocus: 'The Cold-Blooded Baseliner'
+            },
+            {
+                id: 'coach-2',
+                name: 'Elena Rostova',
+                avatar: 'ER',
+                sport: 'Tennis',
+                rating: 5.0,
+                reviewsCount: 52,
+                hourlyRate: 110,
+                specialty: 'Net Attack & Loud Intimidation',
+                fastTrackCapable: true,
+                bio: 'Tournament director and aggressive player coach. Teaches rapid volley mechanics, aggressive serving routines, and unshakeable tie-break confidence.',
+                availableSlots: ['Wednesday at 5:00 PM', 'Friday at 7:00 PM', 'Sunday at 9:00 AM'],
+                larpFocus: 'The Aggressive Net Specialist'
+            },
+            {
+                id: 'coach-3',
+                name: 'Dave "Pickle" Chen',
+                avatar: 'DC',
+                sport: 'Pickleball',
+                rating: 4.8,
+                reviewsCount: 29,
+                hourlyRate: 65,
+                specialty: 'Dink Warfare & Kitchen Mind Games',
+                fastTrackCapable: true,
+                bio: '5.0 rated Pickleball competitor in GTA. I help rookies skip 6 months of beginner mistakes so they look like seasoned club players on day one.',
+                availableSlots: ['Today at 6:00 PM', 'Tomorrow at 7:30 PM', 'Saturday at 1:00 PM'],
+                larpFocus: 'The Psychological Chessmaster'
+            },
+            {
+                id: 'coach-4',
+                name: 'Sarah Jenkins',
+                avatar: 'SJ',
+                sport: 'Pickleball',
+                rating: 4.9,
+                reviewsCount: 41,
+                hourlyRate: 75,
+                specialty: 'Third Shot Drops & Crowd Control',
+                fastTrackCapable: false,
+                bio: 'Focused on high-intensity repetition, fluid footwork, and giving you the signature rituals of top-level tournament players.',
+                availableSlots: ['Thursday at 4:00 PM', 'Sunday at 11:00 AM'],
+                larpFocus: 'The Energetic Crowd-Pleaser'
+            },
+            {
+                id: 'coach-5',
+                name: 'Tariq Al-Mansoor',
+                avatar: 'TA',
+                sport: 'Tennis',
+                rating: 4.7,
+                reviewsCount: 19,
+                hourlyRate: 70,
+                specialty: 'Serve Mechanics & Deceptive Spin',
+                fastTrackCapable: true,
+                bio: 'Master of high-yield technique adjustments. I teach you how to hit slice serves that look lethal even if you just started playing.',
+                availableSlots: ['Wednesday at 8:00 AM', 'Friday at 4:00 PM'],
+                larpFocus: 'The Cold-Blooded Baseliner'
+            },
+            {
+                id: 'coach-6',
+                name: 'Chloe Tremblay',
+                avatar: 'CT',
+                sport: 'Pickleball',
+                rating: 4.9,
+                reviewsCount: 34,
+                hourlyRate: 60,
+                specialty: 'Fast-Hands Speedups & Tournament Rules',
+                fastTrackCapable: true,
+                bio: 'I demystify local GTA ladder leagues, teach tournament etiquette, and turn your panic reactions into clean, calm resets.',
+                availableSlots: ['Tomorrow at 5:00 PM', 'Saturday at 3:00 PM'],
+                larpFocus: 'The Psychological Chessmaster'
+            }
+        ];
+
+        const SEEDED_TOURNAMENTS = [
+            {
+                id: 'tourn-1',
+                title: 'Toronto Open Amateur Cup',
+                sport: 'Tennis',
+                date: 'In 3 Weeks (Sat)',
+                location: 'Trinity Bellwoods Courts, Toronto',
+                level: 'NTRP 2.5 - 3.5',
+                entryFee: '$35',
+                spotsLeft: 4,
+                tag: 'Beginner Friendly'
+            },
+            {
+                id: 'tourn-2',
+                title: 'GTA Pickleball Brawl 2026',
+                sport: 'Pickleball',
+                date: 'In 2 Weeks (Sun)',
+                location: 'Mayfair Clubs East, Toronto',
+                level: 'Skill 3.0 & 3.5',
+                entryFee: '$25',
+                spotsLeft: 2,
+                tag: 'High Energy'
+            },
+            {
+                id: 'tourn-3',
+                title: 'High Park Sunset Ladder',
+                sport: 'Tennis',
+                date: 'Next Month',
+                location: 'High Park Tennis Club',
+                level: 'All Levels Bracketed',
+                entryFee: '$20',
+                spotsLeft: 8,
+                tag: 'Casual Comp'
+            },
+            {
+                id: 'tourn-4',
+                title: 'Metro Toronto Dink Showdown',
+                sport: 'Pickleball',
+                date: 'In 4 Weeks',
+                location: 'Cedarvale Park Courts',
+                level: 'Novice / Intermediate',
+                entryFee: '$30',
+                spotsLeft: 6,
+                tag: 'Fast Pace'
+            }
+        ];
+
+        /* ----------------------------------------------------
+           2. APP STATE MANAGEMENT & LOCAL STORAGE
+        ---------------------------------------------------- */
+        const DEFAULT_STATE = {
+            mode: 'player', // 'player' | 'coach'
+            onboarding: {
+                sport: 'Tennis',
+                skillLevel: 2,
+                targetDate: getFutureDateString(21), // 3 weeks out
+                frequency: '3',
+                budget: 80,
+                persona: 'baseliner'
+            },
+            booking: null, // Stores active coach booking
+            completedDrills: [], // Array of drill IDs
+            registeredTournaments: [] // Array of tournament IDs
+        };
+
+        let appState = loadState();
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('sportiner_crash_course_state');
+                if (saved) return JSON.parse(saved);
+            } catch (e) {
+                console.warn('LocalStorage error, using defaults:', e);
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('sportiner_crash_course_state', JSON.stringify(appState));
+            } catch (e) {
+                console.warn('LocalStorage save failed:', e);
+            }
+        }
+
+        function resetDemoState() {
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveState();
+            showToast('Demo Reset', 'State restored to clean hackathon baseline.');
+            initApp();
+        }
+
+        function getFutureDateString(daysAhead) {
+            const d = new Date();
+            d.setDate(d.getDate() + daysAhead);
+            return d.toISOString().split('T')[0];
+        }
+
+        /* ----------------------------------------------------
+           3. ROUTING & NAVIGATION
+        ---------------------------------------------------- */
+        function navigateTo(viewId) {
+            document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
+            
+            const targetView = document.getElementById(`view-${viewId}`);
+            if (targetView) {
+                targetView.classList.remove('hidden');
+            }
+
+            // Update navbar buttons highlighting
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'font-bold');
+                btn.classList.add('text-slate-400');
+            });
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-emerald-500/20', 'text-emerald-400', 'font-bold');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            // Lazy renders depending on view
+            if (viewId === 'coaches') renderCoachList();
+            if (viewId === 'plan') renderCrashCoursePlan();
+            if (viewId === 'tournaments') renderTournaments();
+            if (viewId === 'coach-dashboard') renderCoachDashboard();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setMode(mode) {
+            appState.mode = mode;
+            saveState();
+
+            const btnPlayer = document.getElementById('btn-mode-player');
+            const btnCoach = document.getElementById('btn-mode-coach');
+            const playerNav = document.getElementById('player-nav');
+
+            if (mode === 'coach') {
+                btnCoach.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white shadow';
+                btnPlayer.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all';
+                playerNav.classList.add('hidden');
+                navigateTo('coach-dashboard');
+            } else {
+                btnPlayer.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-emerald-500 text-white shadow';
+                btnCoach.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all';
+                playerNav.classList.remove('hidden');
+                navigateTo('onboarding');
+            }
+        }
+
+        /* ----------------------------------------------------
+           4. ONBOARDING & FORM LOGIC
+        ---------------------------------------------------- */
+        function updateSkillLabel(val) {
+            const labels = {
+                '1': 'Level 1: Total Rookie',
+                '2': 'Level 2: Casual Hitter',
+                '3': 'Level 3: Weekend Warrior',
+                '4': 'Level 4: Intermediate Regular',
+                '5': 'Level 5: Club Competitor'
+            };
+            document.getElementById('skill-display').innerText = labels[val] || `Level ${val}`;
+        }
+
+        function updateBudgetLabel(val) {
+            document.getElementById('budget-display').innerText = `$${val} / hr`;
+        }
+
+        function handleOnboardingSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            
+            appState.onboarding = {
+                sport: form.sport.value,
+                skillLevel: parseInt(document.getElementById('input-skill').value),
+                targetDate: document.getElementById('input-date').value,
+                frequency: document.getElementById('input-frequency').value,
+                budget: parseInt(document.getElementById('input-budget').value),
+                persona: document.getElementById('input-persona').value
+            };
+            saveState();
+
+            showToast('Goals Saved', `Matching coaches for ${appState.onboarding.sport}...`);
+            navigateTo('coaches');
+        }
+
+        /* ----------------------------------------------------
+           5. COACH MATCHMAKING ENGINE
+        ---------------------------------------------------- */
+        function calculateCoachMatchScore(coach, onboarding) {
+            let score = 70; // Base score
+
+            // Sport match (+20)
+            if (coach.sport === onboarding.sport) score += 20;
+
+            // Budget match (+10 if within budget)
+            if (coach.hourlyRate <= onboarding.budget) score += 10;
+            else score -= 5;
+
+            // Date urgency match (+10 if fast-track capable & days < 28)
+            const daysUntilTarget = getDaysDifference(onboarding.targetDate);
+            if (daysUntilTarget <= 28 && coach.fastTrackCapable) {
+                score += 10;
+            }
+
+            return Math.min(score, 99); // Max 99% match
+        }
+
+        function renderCoachList() {
+            const grid = document.getElementById('coach-grid');
+            const sportFilter = document.getElementById('filter-sport').value;
+            const sortFilter = document.getElementById('filter-sort').value;
+
+            const daysUntil = getDaysDifference(appState.onboarding.targetDate);
+
+            // Filter
+            let list = SEEDED_COACHES.filter(c => {
+                if (sportFilter !== 'ALL' && c.sport !== sportFilter) return false;
+                return true;
+            });
+
+            // Attach score
+            list = list.map(c => ({
+                ...c,
+                matchScore: calculateCoachMatchScore(c, appState.onboarding)
+            }));
+
+            // Sort
+            if (sortFilter === 'score') list.sort((a, b) => b.matchScore - a.matchScore);
+            if (sortFilter === 'price-asc') list.sort((a, b) => a.hourlyRate - b.hourlyRate);
+            if (sortFilter === 'rating') list.sort((a, b) => b.rating - a.rating);
+
+            document.getElementById('results-count-badge').innerText = `${list.length} Available`;
+            document.getElementById('match-summary-text').innerText = 
+                `Targeting ${appState.onboarding.sport} competition in ${daysUntil} days. (${appState.onboarding.frequency}x/wk)`;
+
+            grid.innerHTML = list.map(coach => {
+                const isFastTrack = coach.fastTrackCapable && daysUntil <= 28;
+                return `
+                    <div class="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xl transition transform hover:-translate-y-1">
+                        <div class="space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black flex items-center justify-center text-lg shadow">
+                                        ${coach.avatar}
+                                    </div>
+                                    <div>
+                                        <h3 class="font-extrabold text-white text-base leading-tight">${coach.name}</h3>
+                                        <div class="text-xs text-slate-400">${coach.sport} Coach</div>
+                                    </div>
+                                </div>
+                                <div class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 font-extrabold text-xs px-2.5 py-1 rounded-lg">
+                                    ${coach.matchScore}% LARP Match
+                                </div>
+                            </div>
+
+                            ${isFastTrack ? `
+                                <div class="inline-flex items-center space-x-1.5 bg-lime-400/10 border border-lime-400/30 text-lime-400 text-[11px] font-bold px-2.5 py-0.5 rounded-md">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    <span>Fast-Track Prep Ready (&lt;4 Wks)</span>
+                                </div>
+                            ` : ''}
+
+                            <p class="text-xs text-slate-300 line-clamp-2">${coach.bio}</p>
+
+                            <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 space-y-1">
+                                <div class="text-[10px] uppercase font-bold text-slate-400">LARP Specialty</div>
+                                <div class="text-xs font-semibold text-lime-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-masks-theater text-xs"></i>
+                                    <span>${coach.specialty}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                            <div>
+                                <div class="text-base font-black text-white">$${coach.hourlyRate}<span class="text-xs font-normal text-slate-400">/hr</span></div>
+                                <div class="text-[10px] text-amber-400 font-bold"><i class="fa-solid fa-star"></i> ${coach.rating} (${coach.reviewsCount} reviews)</div>
+                            </div>
+                            <button onclick="openCoachBooking('${coach.id}')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow transition">
+                                Book Crash Course
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ----------------------------------------------------
+           6. BOOKING & COACH DETAIL
+        ---------------------------------------------------- */
+        function openCoachBooking(coachId) {
+            const coach = SEEDED_COACHES.find(c => c.id === coachId);
+            if (!coach) return;
+
+            const container = document.getElementById('booking-coach-detail');
+            const daysUntil = getDaysDifference(appState.onboarding.targetDate);
+
+            container.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-slate-800">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black flex items-center justify-center text-2xl shadow-lg">
+                            ${coach.avatar}
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-lime-400 uppercase">${coach.sport} Specialist</span>
+                            <h2 class="text-2xl font-extrabold text-white">${coach.name}</h2>
+                            <div class="text-xs text-amber-400 font-bold"><i class="fa-solid fa-star"></i> ${coach.rating} • Verified Local Coach</div>
+                        </div>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <div class="text-2xl font-black text-white">$${coach.hourlyRate}<span class="text-xs font-normal text-slate-400">/hr</span></div>
+                        <div class="text-xs text-emerald-400 font-bold">${daysUntil}-Day Crash Course Plan</div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Coach Bio & LARP Approach</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">${coach.bio}</p>
+                </div>
+
+                <!-- Select Slot Form -->
+                <div class="space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Select Initial Bootcamp Slot</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="slot-selector-grid">
+                        ${coach.availableSlots.map((slot, idx) => `
+                            <label class="cursor-pointer">
+                                <input type="radio" name="selected_slot" value="${slot}" ${idx === 0 ? 'checked' : ''} class="peer hidden">
+                                <div class="p-3 rounded-xl border border-slate-800 bg-slate-900 peer-checked:border-lime-400 peer-checked:bg-lime-950/30 text-center text-xs font-semibold text-slate-300 peer-checked:text-white transition">
+                                    <i class="fa-regular fa-clock mb-1 block text-lime-400"></i>
+                                    ${slot}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Confirm Action Button -->
+                <button onclick="confirmBooking('${coach.id}')" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-lime-400 hover:from-emerald-400 hover:to-lime-300 text-slate-950 font-extrabold rounded-xl shadow-lg transition transform active:scale-95 text-sm flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>CONFIRM BOOKING & GENERATE MY PLAN</span>
+                </button>
+            `;
+
+            navigateTo('booking');
+        }
+
+        function confirmBooking(coachId) {
+            const coach = SEEDED_COACHES.find(c => c.id === coachId);
+            const selectedSlot = document.querySelector('input[name="selected_slot"]:checked')?.value || coach.availableSlots[0];
+
+            appState.booking = {
+                coachId: coach.id,
+                coachName: coach.name,
+                coachSport: coach.sport,
+                slot: selectedSlot,
+                bookedAt: new Date().toISOString()
+            };
+            appState.completedDrills = []; // Reset drill progress for new plan
+            saveState();
+
+            showToast('Booking Confirmed!', `Crash course scheduled with ${coach.name}.`);
+            navigateTo('plan');
+        }
+
+        /* ----------------------------------------------------
+           7. DETERMINISTIC PLAN GENERATOR
+        ---------------------------------------------------- */
+        function getDaysDifference(targetDateStr) {
+            if (!targetDateStr) return 21;
+            const target = new Date(targetDateStr);
+            const today = new Date();
+            const diffTime = target - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays > 0 ? diffDays : 14; // Default fallback
+        }
+
+        function generateDrillsList(persona, daysUntil) {
+            const weeks = Math.max(1, Math.ceil(daysUntil / 7));
+            
+            // Base drill templates mapped by persona
+            const personaDrills = {
+                baseliner: [
+                    { id: 'd1', phase: 'Week 1: Fundamentals', title: 'Deep Court Length & Rituals', type: 'Technique', desc: 'Bounce the ball exactly 4 times before serve. Practice high-clearance topspin returns 4 feet over the net.' },
+                    { id: 'd2', phase: 'Week 1: Fundamentals', title: 'Unshakable Posture Drill', type: 'LARP Mental', desc: 'Never walk fast between points. Walk back to baseline with broad shoulders regardless of win/loss.' },
+                    { id: 'd3', phase: 'Week 2: Match Play', title: 'Crosscourt Marathon Reps', type: 'Strategy', desc: 'Hit 20 consecutive crosscourt balls without missing to build tournament-level groundstroke consistency.' },
+                    { id: 'd4', phase: 'Week 3: Pressure Prep', title: 'Tiebreak Simulation & Loud Calls', type: 'Pressure', desc: 'Play 7-point tiebreak games starting at 4-4 score. Practice firm, clear line calls with pro confidence.' }
+                ],
+                smasher: [
+                    { id: 'd1', phase: 'Week 1: Fundamentals', title: 'Aggressive Volley Punch & Split Step', type: 'Technique', desc: 'Master the sharp split-step at the kitchen line / net. Compact forward block volleys.' },
+                    { id: 'd2', phase: 'Week 1: Fundamentals', title: 'The Intimidating Net Presence', type: 'LARP Mental', desc: 'Crowd the net. Stand tall and extend racket width to cut down passing lane angles.' },
+                    { id: 'd3', phase: 'Week 2: Match Play', title: 'Poach & Overhead Smash Drills', type: 'Strategy', desc: 'Practice anticipation movement off serve returns to smash floaters cleanly into empty court space.' },
+                    { id: 'd4', phase: 'Week 3: Pressure Prep', title: 'Fast-Hands Kitchen Firefights', type: 'Pressure', desc: 'Rapid-fire volley resets under intense pace to maintain calm eyes and aggressive body stance.' }
+                ],
+                tactician: [
+                    { id: 'd1', phase: 'Week 1: Fundamentals', title: 'Third Shot Drop & Pace Disruption', type: 'Technique', desc: 'Learn soft-touch resets that force your opponent into awkward, unattackator low balls.' },
+                    { id: 'd2', phase: 'Week 1: Fundamentals', title: 'Targeted Opponent Scanning', type: 'LARP Mental', desc: 'Observe opponent warm-up strokes to identify backhand weaknesses before match start.' },
+                    { id: 'd3', phase: 'Week 2: Match Play', title: 'Deep Lobs & Angle Exploitation', type: 'Strategy', desc: 'Execute precise directional shifts to move opponents side-to-side and steal court position.' },
+                    { id: 'd4', phase: 'Week 3: Pressure Prep', title: 'Decisive Match Strategy Execution', type: 'Pressure', desc: 'Stick strictly to your game plan during match point scenarios without panicking.' }
+                ],
+                showman: [
+                    { id: 'd1', phase: 'Week 1: Fundamentals', title: 'Deceptive Slice & Spin Control', type: 'Technique', desc: 'Master heavy underspin slice returns that stay low and disrupt opponent rhythm.' },
+                    { id: 'd2', phase: 'Week 1: Fundamentals', title: 'Signature Pre-Point Routine', type: 'LARP Mental', desc: 'Establish an energetic, stylish pre-serve routine to command match rhythm.' },
+                    { id: 'd3', phase: 'Week 2: Match Play', title: 'Around-the-Post & Highlight Shots', type: 'Strategy', desc: 'Practice sharp angle wide shots and overheads with flair and composure.' },
+                    { id: 'd4', phase: 'Week 3: Pressure Prep', title: 'Crowd Energy & Momentum Control', type: 'Pressure', desc: 'Use fist pumps and calm breathing to maintain momentum during tight tournament matches.' }
+                ]
+            };
+
+            return personaDrills[persona] || personaDrills.baseliner;
+        }
+
+        function renderCrashCoursePlan() {
+            const booking = appState.booking;
+            const onboarding = appState.onboarding;
+
+            if (!booking) {
+                // If user hasn't booked a coach yet, prompt them
+                document.getElementById('view-plan').innerHTML = `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4 max-w-xl mx-auto shadow-2xl">
+                        <div class="w-16 h-16 bg-slate-800 text-lime-400 rounded-full flex items-center justify-center text-2xl mx-auto">
+                            <i class="fa-solid fa-calendar-xmark"></i>
+                        </div>
+                        <h2 class="text-xl font-extrabold text-white">No Active Crash Course Plan</h2>
+                        <p class="text-xs text-slate-400">Please complete the goal setup and select a matched coach to generate your custom LARP tournament prep schedule.</p>
+                        <button onclick="navigateTo('coaches')" class="px-6 py-2.5 bg-emerald-500 text-slate-950 font-black text-xs rounded-xl hover:bg-emerald-400 transition">
+                            Find a Coach Now
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const daysUntil = getDaysDifference(onboarding.targetDate);
+            const weeksUntil = Math.max(1, Math.ceil(daysUntil / 7));
+            const drills = generateDrillsList(onboarding.persona, daysUntil);
+
+            // Persona Mantra Map
+            const personasMantras = {
+                baseliner: '"Act like every ball hit to your baseline is an insult. Keep deep length, never look rushed, and walk between points like a seasoned pro."',
+                smasher: '"Cut down the court size. Own the net with decisive split-steps and sharp volley punches that make opponents doubt their passing shots."',
+                tactician: '"Treat every point like a chess problem. Control the pace, stay composed during rallies, and exploit backhand patterns silently."',
+                showman: '"Breathe energy into your game. Command the court atmosphere with crisp spin, sharp positioning, and relentless momentum."'
+            };
+
+            // Update plan header stats
+            document.getElementById('plan-title').innerText = `The ${onboarding.persona.toUpperCase()} Protocol`;
+            document.getElementById('plan-coach-name').innerText = booking.coachName;
+            document.getElementById('plan-target-event').innerText = `${onboarding.sport} Competition`;
+            document.getElementById('plan-countdown').innerText = daysUntil;
+            document.getElementById('plan-weeks-text').innerText = `${weeksUntil} Week Fast-Track Plan`;
+            document.getElementById('plan-persona-mantra').innerText = personasMantras[onboarding.persona] || personasMantras.baseliner;
+
+            // Calculate progress
+            const completed = appState.completedDrills || [];
+            const percent = Math.round((completed.length / drills.length) * 100);
+            document.getElementById('progress-percent').innerText = `${percent}%`;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+
+            // Render drills container
+            const container = document.getElementById('plan-drills-container');
+            container.innerHTML = drills.map((drill, idx) => {
+                const isDone = completed.includes(drill.id);
+                return `
+                    <div class="bg-slate-900 border ${isDone ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} rounded-2xl p-5 flex items-start justify-between gap-4 transition shadow-lg">
+                        <div class="space-y-2 flex-grow">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700">${drill.phase}</span>
+                                <span class="text-[10px] font-bold text-lime-400 bg-lime-950/40 px-2 py-0.5 rounded border border-lime-500/30">${drill.type}</span>
+                            </div>
+                            <h4 class="text-base font-extrabold text-white ${isDone ? 'line-through text-slate-400' : ''}">${drill.title}</h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">${drill.desc}</p>
+                        </div>
+                        <button onclick="toggleDrillCompletion('${drill.id}')" class="flex-shrink-0 w-8 h-8 rounded-xl border ${isDone ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-700 hover:border-lime-400 text-transparent'} flex items-center justify-center font-bold transition">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleDrillCompletion(drillId) {
+            if (!appState.completedDrills) appState.completedDrills = [];
+            
+            const idx = appState.completedDrills.indexOf(drillId);
+            if (idx > -1) {
+                appState.completedDrills.splice(idx, 1);
+                showToast('Drill Unchecked', 'Progress updated.');
+            } else {
+                appState.completedDrills.push(drillId);
+                showToast('Drill Completed!', 'Nice work! Coach notified of your progress.');
+            }
+
+            saveState();
+            renderCrashCoursePlan();
+        }
+
+        /* ----------------------------------------------------
+           8. TOURNAMENT HUB LOGIC
+        ---------------------------------------------------- */
+        function renderTournaments() {
+            const grid = document.getElementById('tournaments-grid');
+            const registered = appState.registeredTournaments || [];
+
+            grid.innerHTML = SEEDED_TOURNAMENTS.map(t => {
+                const isReg = registered.includes(t.id);
+                return `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-xl">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] font-bold text-lime-400 uppercase bg-lime-950/40 border border-lime-500/30 px-2.5 py-0.5 rounded-full">${t.tag}</span>
+                                <span class="text-xs font-bold text-slate-400">${t.sport}</span>
+                            </div>
+                            <h3 class="text-lg font-black text-white">${t.title}</h3>
+                            <div class="space-y-1 text-xs text-slate-300">
+                                <div class="flex items-center space-x-2"><i class="fa-regular fa-calendar text-emerald-400 w-4"></i><span>${t.date}</span></div>
+                                <div class="flex items-center space-x-2"><i class="fa-solid fa-location-dot text-emerald-400 w-4"></i><span>${t.location}</span></div>
+                                <div class="flex items-center space-x-2"><i class="fa-solid fa-layer-group text-emerald-400 w-4"></i><span>Bracket: ${t.level}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-slate-400">Entry Fee: <strong class="text-white">${t.entryFee}</strong></div>
+                                <div class="text-[10px] text-amber-400 font-bold">${t.spotsLeft} spots remaining</div>
+                            </div>
+                            <button onclick="toggleTournamentReg('${t.id}')" class="px-4 py-2 text-xs font-extrabold rounded-xl transition shadow ${isReg ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40' : 'bg-gradient-to-r from-emerald-500 to-lime-400 text-slate-950 hover:from-emerald-400 hover:to-lime-300'}">
+                                ${isReg ? '<i class="fa-solid fa-check mr-1"></i> Registered' : 'Register Now'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleTournamentReg(tournId) {
+            if (!appState.registeredTournaments) appState.registeredTournaments = [];
+            const idx = appState.registeredTournaments.indexOf(tournId);
+            const tourn = SEEDED_TOURNAMENTS.find(t => t.id === tournId);
+
+            if (idx > -1) {
+                appState.registeredTournaments.splice(idx, 1);
+                showToast('Registration Canceled', `Removed from ${tourn.title}`);
+            } else {
+                appState.registeredTournaments.push(tournId);
+                showToast('Tournament Registered!', `Spot confirmed for ${tourn.title}`);
+            }
+
+            saveState();
+            renderTournaments();
+        }
+
+        /* ----------------------------------------------------
+           9. COACH DASHBOARD LOGIC (COACH MODE)
+        ---------------------------------------------------- */
+        function renderCoachDashboard() {
+            const list = document.getElementById('coach-students-list');
+            const booking = appState.booking;
+
+            if (!booking) {
+                list.innerHTML = `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400 text-xs">
+                        No active student bookings in your coach queue yet. Switch back to Player Mode to simulate a booking.
+                    </div>
+                `;
+                document.getElementById('coach-active-count').innerText = '0';
+                return;
+            }
+
+            document.getElementById('coach-active-count').innerText = '1';
+            const completedCount = (appState.completedDrills || []).length;
+
+            list.innerHTML = `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-slate-800">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-indigo-600 text-white font-black rounded-xl flex items-center justify-center text-lg">
+                                PL
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-white text-base">Player (You - Hackathon Demo)</h3>
+                                <div class="text-xs text-indigo-400 font-semibold">Assigned Plan: ${appState.onboarding.persona.toUpperCase()}</div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs text-slate-300">
+                            Slot: <strong class="text-white">${booking.slot}</strong>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">Sport & Level</span>
+                            <strong class="text-white">${appState.onboarding.sport} (Level ${appState.onboarding.skillLevel})</strong>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">Drill Completion</span>
+                            <strong class="text-lime-400">${completedCount} Drills Marked Done</strong>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">Target Comp Date</span>
+                            <strong class="text-white">${appState.onboarding.targetDate}</strong>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Coach Notes & Readiness Assessment</label>
+                        <textarea onchange="saveCoachNotes(this.value)" placeholder="Enter private coach notes..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 h-20">${appState.coachNotes || 'Student shows good consistency on deep ball returns. Needs work on split-step posture before match day.'}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveCoachNotes(val) {
+            appState.coachNotes = val;
+            saveState();
+            showToast('Coach Notes Saved', 'Readiness assessment updated.');
+        }
+
+        /* ----------------------------------------------------
+           10. TOAST NOTIFICATIONS & INITIALIZATION
+        ---------------------------------------------------- */
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function initApp() {
+            // Restore onboarding form inputs from state
+            if (appState.onboarding) {
+                document.getElementById('input-skill').value = appState.onboarding.skillLevel || 2;
+                updateSkillLabel(appState.onboarding.skillLevel || 2);
+
+                document.getElementById('input-budget').value = appState.onboarding.budget || 80;
+                updateBudgetLabel(appState.onboarding.budget || 80);
+
+                if (appState.onboarding.targetDate) {
+                    document.getElementById('input-date').value = appState.onboarding.targetDate;
+                } else {
+                    document.getElementById('input-date').value = getFutureDateString(21);
+                }
+
+                if (appState.onboarding.frequency) {
+                    document.getElementById('input-frequency').value = appState.onboarding.frequency;
+                }
+
+                if (appState.onboarding.persona) {
+                    document.getElementById('input-persona').value = appState.onboarding.persona;
+                }
+            }
+
+            // Start in player mode or saved mode
+            if (appState.mode === 'coach') {
+                setMode('coach');
+            } else {
+                setMode('player');
+            }
+        }
+
+        // Initialize on window load
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
