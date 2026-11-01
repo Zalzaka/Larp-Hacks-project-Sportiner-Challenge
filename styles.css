@@ -209,3 +209,14 @@ input[type="range"] { width: 100%; accent-color: var(--neon); }
 .inbox-item:hover { border-color: var(--neon); }
 .modal textarea.input { min-height: 110px; }
 @media (max-width: 600px) { .who { display: none; } }
+
+/* manage students: coach filters, recruiter views */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stat b { font-size: 18px; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.active { border-color: var(--neon); }
+.stat.active span { color: var(--neon); }
+.seg { display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.seg button { flex: 1; background: none; border: 0; border-radius: 9px; padding: 8px; color: var(--muted); font-weight: 700; }
+.seg button.active { background: var(--neon); color: #0b0f17; }

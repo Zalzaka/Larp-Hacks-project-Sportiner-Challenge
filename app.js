@@ -1,7 +1,7 @@
 let typingFor = null; // thread key whose coach reply is in flight
 let certFile = null; // uploaded certificate, kept in memory only
 let toastTimer = null;
-let pendingEmail = null; // a new email waiting for the user to pick a role
+let pendingRole = null; // role picked on the first sign-in screen, before the email is entered
 let showClipForm = false;
 let recruiterMinLevel = 1;
 let recruiterSport = 'all';
@@ -109,7 +109,7 @@ function goBrand() {
 
 function logOut() {
   writeSession(null);
-  pendingEmail = null;
+  pendingRole = null;
   go({ screen: 'auth', tab: 'coaches', openThread: null, openStudent: null, preview: null, contact: null });
 }
 
@@ -135,7 +135,7 @@ function enforceFlow() {
   const ui = state.ui;
   const a = me();
   if (!a) {
-    ui.screen = pendingEmail ? 'role' : 'auth';
+    ui.screen = 'auth';
     return;
   }
   if (a.role === 'student') {
@@ -156,19 +156,39 @@ function enforceFlow() {
 function render() {
   enforceFlow();
   renderShell();
-  const views = { auth, role: roleScreen, wizard, ready, home, cprofile, ccert, cverify, cpanel, rprofile, rpanel };
+  const views = { auth, wizard, ready, home, cprofile, ccert, cverify, cpanel, rprofile, rpanel };
   $('app').innerHTML = (views[state.ui.screen] || auth)();
 
   const box = document.querySelector('[data-scroll-end]');
   if (box) box.scrollIntoView({ block: 'end' });
 }
 
-// ---------- intro: email, then role ----------
+// ---------- intro: role first, then email ----------
+
+const ROLE_NAMES = { student: 'Student', coach: 'Coach', recruiter: 'Recruiter' };
 
 function auth() {
+  return pendingRole ? emailScreen() : roleScreen();
+}
+
+function roleScreen() {
   return `
-    <h1 class="h1 wz-title">Welcome to <span class="neon">Sportiner</span></h1>
-    <p class="muted mt1 wz-sub">Enter your email to sign up or log in.</p>
+    <h1 class="h1 wz-title">Welcome to <span class="neon">Larplete</span></h1>
+    <p class="muted mt1 wz-sub">Who are you?</p>
+    <div class="tiles">
+      <button class="tile" onclick="chooseRole('student')"><span class="tile-icon">🎓</span><span class="tile-text"><span class="tile-label">Student</span><span class="tile-desc">Find a coach and train</span></span></button>
+      <button class="tile" onclick="chooseRole('coach')"><span class="tile-icon">🧑‍🏫</span><span class="tile-text"><span class="tile-label">Coach</span><span class="tile-desc">Get verified and meet students</span></span></button>
+      <button class="tile" onclick="chooseRole('recruiter')"><span class="tile-icon">🏫</span><span class="tile-text"><span class="tile-label">Recruiter</span><span class="tile-desc">Scout players for a university or club</span></span></button>
+    </div>`;
+}
+
+function emailScreen() {
+  return `
+    <div class="wz-top">
+      <button class="wz-back" onclick="backToRole()" aria-label="Back">←</button>
+    </div>
+    <h1 class="h1 wz-title">Sign up or log in</h1>
+    <p class="muted mt1 wz-sub">Signing in as a ${ROLE_NAMES[pendingRole].toLowerCase()}. Enter your email to continue.</p>
     <form class="form mt4" onsubmit="submitEmail(event)">
       <label class="field"><span class="lbl">Email</span><input id="auth-email" type="email" class="input big" placeholder="you@example.com" autocomplete="email" required></label>
       <p id="auth-error" class="error hidden"></p>
@@ -177,47 +197,33 @@ function auth() {
     </form>`;
 }
 
+function chooseRole(role) {
+  pendingRole = role;
+  go({ screen: 'auth' });
+}
+
+function backToRole() {
+  pendingRole = null;
+  go({ screen: 'auth' });
+}
+
 function submitEmail(e) {
   e.preventDefault();
   const email = $('auth-email').value.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('auth-error', 'Enter a valid email address.');
-  if (state.accounts[email]) {
+  const existing = state.accounts[email];
+  if (existing) {
+    if (existing.role !== pendingRole) return showError('auth-error', `${email} is registered as a ${ROLE_NAMES[existing.role].toLowerCase()}. Go back and choose that role.`);
     writeSession(email);
-    pendingEmail = null;
+    pendingRole = null;
     toast('Welcome back');
     go({ screen: 'home', tab: 'coaches', openThread: null, openStudent: null });
   } else {
-    pendingEmail = email;
-    go({ screen: 'role' });
+    state.accounts[email] = { email, role: pendingRole, student: null, coach: null, recruiter: null, confirmed: [], inbox: [] };
+    writeSession(email);
+    pendingRole = null;
+    go({ screen: 'home', tab: 'coaches', openThread: null, openStudent: null });
   }
-}
-
-function roleScreen() {
-  return `
-    <div class="wz-top">
-      <button class="wz-back" onclick="backToEmail()" aria-label="Back">←</button>
-      <div class="wz-bar"><i style="width:10%"></i></div>
-    </div>
-    <h1 class="h1 wz-title">Who are you?</h1>
-    <p class="muted mt1 wz-sub">${esc(pendingEmail)}</p>
-    <div class="tiles">
-      <button class="tile" onclick="chooseRole('student')"><span class="tile-icon">🎓</span><span class="tile-text"><span class="tile-label">Student</span><span class="tile-desc">Find a coach and train</span></span></button>
-      <button class="tile" onclick="chooseRole('coach')"><span class="tile-icon">🧑‍🏫</span><span class="tile-text"><span class="tile-label">Coach</span><span class="tile-desc">Get verified and meet students</span></span></button>
-      <button class="tile" onclick="chooseRole('recruiter')"><span class="tile-icon">🏫</span><span class="tile-text"><span class="tile-label">Recruiter</span><span class="tile-desc">Scout players for a university or club</span></span></button>
-    </div>`;
-}
-
-function backToEmail() {
-  pendingEmail = null;
-  go({ screen: 'auth' });
-}
-
-function chooseRole(role) {
-  if (!pendingEmail) return;
-  state.accounts[pendingEmail] = { email: pendingEmail, role, student: null, coach: null, recruiter: null, confirmed: [], inbox: [] };
-  writeSession(pendingEmail);
-  pendingEmail = null;
-  go({ screen: 'home', tab: 'coaches', openThread: null, openStudent: null });
 }
 
 // ---------- student onboarding: one full-screen question at a time ----------
@@ -330,7 +336,7 @@ function ready() {
     <div class="chips mt3" style="justify-content:center;gap:8px">
       ${WIZARD.map((st) => `<span class="tag">${esc(optionLabel(st.key, s[st.key]))}</span>`).join('')}
     </div>
-    <button class="btn mt4" onclick="startApp()">Start using Sportiner</button>`;
+    <button class="btn mt4" onclick="startApp()">Start using Larplete</button>`;
 }
 
 function readyBack() {
@@ -667,7 +673,7 @@ function clipCard(c, mode) {
     mode === 'mine'
       ? `<button class="link-btn" onclick="deleteClip('${c.id}')">Delete</button>`
       : mode === 'recruiter'
-        ? `<button class="btn small mt2" onclick="contactAthlete('${c.id}')">Contact ${esc(who.split(' ')[0])}</button>`
+        ? `<div class="row mt2"><button class="btn small" onclick="contactAthlete('${c.id}')">Contact ${esc(who.split(' ')[0])}</button><button class="btn ghost small" onclick="toggleShortlist('${c.id}')">${isShortlisted(c.id) ? 'Saved ✓' : 'Save'}</button></div>`
         : '';
   return `<article class="card clip">${videoBlock(c)}
     <div class="row between mt2"><div><h3 class="h3">${esc(c.title)}</h3><p class="muted small">${esc(who)} · Level ${Number(c.level).toFixed(1)} · ${SPORTS[c.sport]}</p></div>
@@ -711,7 +717,7 @@ function toggleClipForm() {
 // Uploaded video files are kept in this browser (IndexedDB), because localStorage is too small for video.
 function openVideoDb() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('sportiner-videos', 1);
+    const req = indexedDB.open('larplete-videos', 1);
     req.onupgradeneeded = () => req.result.createObjectStore('videos');
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -838,7 +844,7 @@ function resetDemo() {
   resetState();
   typingFor = null;
   certFile = null;
-  pendingEmail = null;
+  pendingRole = null;
   render();
 }
 
@@ -892,7 +898,7 @@ function saveCoachProfile(e) {
     avail,
     specialties,
     fastTrack: f.cquick.checked,
-    bio: f.cbio.value.trim() || 'New coach on Sportiner.',
+    bio: f.cbio.value.trim() || 'New coach on Larplete.',
     status: previous.status === 'verified' ? 'verified' : 'draft',
     certName: previous.certName || null,
     reason: previous.reason || '',
@@ -966,18 +972,128 @@ function cpanel() {
   if (state.ui.openStudent) return `${head}${studentDetail(state.ui.openStudent)}`;
 
   const threads = coachThreads();
+  const body = coachView === 'overview' ? coachOverview(threads) : coachView === 'activity' ? coachActivity(threads) : coachStudentsSection(threads);
   return `${head}
+    <div class="seg mt3">${[['overview', 'Overview'], ['students', `Students (${threads.length})`], ['activity', 'Activity']]
+      .map(([v, label]) => `<button class="${coachView === v ? 'active' : ''}" onclick="setCoachView('${v}')">${label}</button>`).join('')}</div>
+    ${body}`;
+}
+
+let coachView = 'students'; // 'overview', 'students' or 'activity'
+
+function setCoachView(view) {
+  coachView = view;
+  render();
+}
+
+function coachStudentsSection(threads) {
+  return `
     <h2 class="h2 mt3">Your students</h2>
-    <p class="muted mt1">Students who have sent you a request. Open one to reply, or send them drills and notes.</p>
+    <p class="muted mt1">Students who have sent you a request. Track where each one is, add private notes, and open one to reply or send drills.</p>
+    ${threads.length ? coachStudentsList(threads) : `<div class="card mt2"><p class="h3">No requests yet.</p><p class="muted mt1">When a student confirms you and sends a request, it shows up here. To try it, log out and sign up as a student with another email.</p></div>`}`;
+}
+
+function coachOverview(threads) {
+  const sent = me().coach.sent || [];
+  const waiting = threads.filter((t) => t.messages.length && t.messages[t.messages.length - 1].from === 'student');
+  const stat = (label, n) => `<div class="stat"><b>${n}</b><span>${label}</span></div>`;
+  return `
+    <h2 class="h2 mt3">Overview</h2>
+    <div class="stats mt2">${stat('Students', threads.length)}${stat('Training', threads.filter((t) => studentStatus(t) === 'training').length)}${stat('Ready', threads.filter((t) => studentStatus(t) === 'done').length)}${stat('Items sent', sent.length)}</div>
+    <h3 class="h3 mt3">Waiting for your reply</h3>
+    ${waiting.length
+      ? waiting.map((t) => `<button class="listrow" data-email="${esc(t.student)}" onclick="setCoachView('students'); openStudent(this.dataset.email)">${avatar({ id: t.student, name: nameOf(t.student) }, 40)}
+          <div class="grow"><div class="h3">${esc(nameOf(t.student))}</div><div class="muted small clip">${esc(t.messages[t.messages.length - 1].text)}</div></div></button>`).join('')
+      : '<p class="muted mt1">You are all caught up.</p>'}`;
+}
+
+function coachActivity(threads) {
+  const sent = me().coach.sent || [];
+  const KIND = { drill: 'Drill', note: 'Note' };
+  return `
+    <h2 class="h2 mt3">Send a drill to several students</h2>
+    <p class="muted mt1">Pick students, choose a drill, and it goes to each of their inboxes.</p>
     ${threads.length
-      ? threads.map((t) => {
+      ? `<form class="card mt2" onsubmit="sendBulkDrill(event)">
+          ${threads.map((t) => `<label class="chip mt1"><input type="checkbox" name="bstudent" value="${esc(t.student)}"><span>${esc(nameOf(t.student))}</span></label>`).join(' ')}
+          <label class="field mt2"><span class="lbl">Drill</span>
+            <select id="bulk-drill" class="input">${Object.entries(SKILLS).map(([k, v]) => `<option value="${k}">${v}: ${esc(DRILLS[k].title)}</option>`).join('')}</select></label>
+          <button class="btn ghost mt2" type="submit">Send drill</button>
+        </form>`
+      : '<p class="muted mt2">No students yet.</p>'}
+    <h2 class="h2 mt3">History</h2>
+    ${sent.length
+      ? sent.slice(0, 50).map((s) => `<div class="listrow"><div class="grow"><div class="h3">${KIND[s.kind]}: ${esc(s.title)}</div>
+          <div class="muted small">To ${esc(nameOf(s.student))} · ${fmtTime(s.ts)}</div></div></div>`).join('')
+      : '<p class="muted mt1">Nothing sent yet.</p>'}`;
+}
+
+function recordSent(item) {
+  const c = me().coach;
+  c.sent = c.sent || [];
+  c.sent.unshift({ ...item, ts: Date.now() });
+}
+
+function sendBulkDrill(e) {
+  e.preventDefault();
+  const emails = [...e.target.querySelectorAll('input[name="bstudent"]:checked')].map((i) => i.value);
+  if (!emails.length) return toast('Pick at least one student');
+  const skill = $('bulk-drill').value;
+  emails.forEach((email) => {
+    addInbox(email, { kind: 'drill', from: me().coach.name, title: DRILLS[skill].title, body: DRILLS[skill].text });
+    recordSent({ kind: 'drill', student: email, title: DRILLS[skill].title });
+  });
+  saveState();
+  toast(`Drill sent to ${emails.length} student${emails.length > 1 ? 's' : ''}`);
+  render();
+}
+
+const STUDENT_STATUSES = { new: 'New', training: 'Training', done: 'Ready' };
+let coachStudentFilter = 'all';
+
+function studentStatus(t) {
+  return (t.manage && t.manage.status) || 'new';
+}
+
+function coachStudentsList(threads) {
+  const counts = Object.fromEntries(Object.keys(STUDENT_STATUSES).map((k) => [k, threads.filter((t) => studentStatus(t) === k).length]));
+  const shown = coachStudentFilter === 'all' ? threads : threads.filter((t) => studentStatus(t) === coachStudentFilter);
+  const filters = [['all', 'All', threads.length], ...Object.entries(STUDENT_STATUSES).map(([k, label]) => [k, label, counts[k]])];
+  return `
+    <div class="stats mt3">${filters.map(([k, label, n]) => `<button class="stat ${coachStudentFilter === k ? 'active' : ''}" onclick="setCoachFilter('${k}')"><b>${n}</b><span>${label}</span></button>`).join('')}</div>
+    ${shown.length
+      ? shown.map((t) => {
           const s = state.accounts[t.student] && state.accounts[t.student].student;
           const last = t.messages[t.messages.length - 1];
           return `<button class="listrow" data-email="${esc(t.student)}" onclick="openStudent(this.dataset.email)">${avatar({ id: t.student, name: nameOf(t.student) }, 48)}
-            <div class="grow"><div class="h3">${esc(nameOf(t.student))}</div>
+            <div class="grow"><div class="row"><div class="h3">${esc(nameOf(t.student))}</div><span class="pill ${studentStatus(t) === 'done' ? 'ok' : studentStatus(t) === 'new' ? '' : 'dim'}">${STUDENT_STATUSES[studentStatus(t)]}</span></div>
             <div class="muted small clip">${esc(last ? last.text : s ? `${levelName(s.level)} → ${Number(s.target).toFixed(1)}` : 'New request')}</div></div></button>`;
         }).join('')
-      : `<div class="card mt2"><p class="h3">No requests yet.</p><p class="muted mt1">When a student confirms you and sends a request, it shows up here. To try it, log out and sign up as a student with another email.</p></div>`}`;
+      : '<p class="muted mt2">No students in this group.</p>'}`;
+}
+
+function setCoachFilter(filter) {
+  coachStudentFilter = filter;
+  render();
+}
+
+function coachThread(email) {
+  return state.threads[threadKey(email, coachIdOf(session))];
+}
+
+function setStudentStatus(email, status) {
+  const t = coachThread(email);
+  t.manage = { ...(t.manage || {}), status };
+  saveState();
+  render();
+}
+
+function saveStudentNotes(e, email) {
+  e.preventDefault();
+  const t = coachThread(email);
+  t.manage = { ...(t.manage || {}), notes: $('s-notes').value.trim() };
+  saveState();
+  toast('Notes saved');
 }
 
 function openStudent(email) {
@@ -994,6 +1110,14 @@ function studentDetail(email) {
     <button class="link-btn mt3" onclick="go({openStudent:null})">← All students</button>
     <h2 class="h2 mt1">${esc(name)}</h2>
     <p class="muted small mt1">${studentFactsLine(s)}</p>
+    <div class="card mt2">
+      <p class="small muted">Status (only you see this)</p>
+      <div class="chips mt1">${Object.entries(STUDENT_STATUSES).map(([k, label]) => `<label class="chip"><input type="radio" name="sstatus" onchange="setStudentStatus('${esc(email)}', '${k}')" ${studentStatus(t) === k ? 'checked' : ''}><span>${label}</span></label>`).join('')}</div>
+      <form class="form mt2" onsubmit="saveStudentNotes(event, '${esc(email)}')">
+        <label class="field"><span class="lbl">Private notes</span><textarea id="s-notes" class="input" placeholder="Strengths, goals, what to work on next…">${esc((t.manage && t.manage.notes) || '')}</textarea></label>
+        <button class="btn ghost" type="submit">Save notes</button>
+      </form>
+    </div>
     ${briefingCard(t, '')}
     <div class="card mt2"><p class="small muted">Their answers</p>${answersList(t.answers)}</div>
     <h3 class="h3 mt3">Conversation</h3>
@@ -1032,6 +1156,7 @@ function sendDrill(e) {
   e.preventDefault();
   const skill = $('drill-pick').value;
   addInbox(state.ui.openStudent, { kind: 'drill', from: me().coach.name, title: DRILLS[skill].title, body: DRILLS[skill].text });
+  recordSent({ kind: 'drill', student: state.ui.openStudent, title: DRILLS[skill].title });
   saveState();
   toast('Drill sent to their inbox');
 }
@@ -1041,6 +1166,7 @@ function sendNote(e) {
   const text = $('note-text').value.trim();
   if (!text) return;
   addInbox(state.ui.openStudent, { kind: 'note', from: me().coach.name, title: 'Note from your coach', body: text });
+  recordSent({ kind: 'note', student: state.ui.openStudent, title: text.length > 40 ? text.slice(0, 40) + '…' : text });
   $('note-text').value = '';
   saveState();
   toast('Note sent to their inbox');
@@ -1064,13 +1190,22 @@ function saveRecruiter(e) {
   go({ screen: 'rpanel' });
 }
 
+let recruiterView = 'find'; // 'find' (browse videos) or 'students' (saved players)
+const PIPELINE = { watching: 'Watching', contacted: 'Contacted', interested: 'Interested', declined: 'Not a fit' };
+
 function rpanel() {
   const a = me();
+  const head = `<div class="row">${avatar({ id: a.email, name: a.recruiter.org }, 48)}<div><h2 class="h3">${esc(a.recruiter.org)}</h2><p class="muted small">Recruiter</p></div></div>
+    <div class="seg mt3">
+      <button class="${recruiterView === 'find' ? 'active' : ''}" onclick="setRecruiterView('find')">Find players</button>
+      <button class="${recruiterView === 'students' ? 'active' : ''}" onclick="setRecruiterView('students')">My students (${shortlistOf().length})</button>
+    </div>`;
+  if (recruiterView === 'students') return `${head}${recruiterStudentsView()}${state.ui.contact ? contactModal(state.ui.contact) : ''}`;
+
   const list = [...state.clips.filter((c) => c.shared), ...CLIPS].filter((c) => c.level >= recruiterMinLevel && (recruiterSport === 'all' || c.sport === recruiterSport));
-  return `
-    <div class="row">${avatar({ id: a.email, name: a.recruiter.org }, 48)}<div><h2 class="h3">${esc(a.recruiter.org)}</h2><p class="muted small">Recruiter</p></div></div>
+  return `${head}
     <h2 class="h2 mt3">Find players</h2>
-    <p class="muted mt1">Watch videos from players and contact the ones you like.</p>
+    <p class="muted mt1">Watch videos from players, save the ones you like, and contact them.</p>
     <div class="grid2 mt3">
       <label class="field"><span class="lbl">Minimum level</span>
         <select class="input" onchange="setRecruiterFilter('level', this.value)">${LEVELS.map((l) => `<option value="${l.v}" ${l.v === recruiterMinLevel ? 'selected' : ''}>${levelName(l.v)}</option>`).join('')}</select></label>
@@ -1079,6 +1214,70 @@ function rpanel() {
     </div>
     <div class="clip-grid mt3">${list.length ? list.map((c) => clipCard(c, 'recruiter')).join('') : '<p class="muted">No players match those filters.</p>'}</div>
     ${state.ui.contact ? contactModal(state.ui.contact) : ''}`;
+}
+
+function setRecruiterView(view) {
+  recruiterView = view;
+  render();
+}
+
+function shortlistOf() {
+  const r = me().recruiter;
+  r.shortlist = r.shortlist || [];
+  return r.shortlist;
+}
+
+function isShortlisted(id) {
+  return shortlistOf().some((p) => p.clipId === id);
+}
+
+function toggleShortlist(id) {
+  const list = shortlistOf();
+  const i = list.findIndex((p) => p.clipId === id);
+  if (i >= 0) {
+    list.splice(i, 1);
+    toast('Removed from your students');
+  } else {
+    const c = findClip(id);
+    if (!c) return;
+    list.push({ clipId: id, name: c.owner ? nameOf(c.owner) : c.player, title: c.title, sport: c.sport, level: c.level, status: 'watching', notes: '', addedAt: Date.now() });
+    toast('Saved to your students');
+  }
+  saveState();
+  render();
+}
+
+function recruiterStudentsView() {
+  const list = shortlistOf();
+  const intro = `<h2 class="h2 mt3">My students</h2><p class="muted mt1">Players you saved. Track where each one stands and keep notes.</p>`;
+  if (!list.length) return `${intro}<div class="card mt3"><p class="h3">No students yet.</p><p class="muted mt1">On Find players, press Save under a video to add that player here.</p></div>`;
+  return `${intro}${list.map((p) => `
+    <article class="card mt3">
+      <div class="row between"><div><h3 class="h3">${esc(p.name)}</h3><p class="muted small">${esc(p.title)} · Level ${Number(p.level).toFixed(1)} · ${SPORTS[p.sport]}</p></div>
+        <button class="link-btn" onclick="toggleShortlist('${p.clipId}')">Remove</button></div>
+      <div class="chips mt2">${Object.entries(PIPELINE).map(([k, label]) => `<label class="chip"><input type="radio" name="pipe-${p.clipId}" onchange="setPipeline('${p.clipId}', '${k}')" ${p.status === k ? 'checked' : ''}><span>${label}</span></label>`).join('')}</div>
+      <form class="form mt2" onsubmit="savePipelineNotes(event, '${p.clipId}')">
+        <textarea id="pn-${p.clipId}" class="input" placeholder="Notes on this player…">${esc(p.notes || '')}</textarea>
+        <div class="grid2"><button class="btn ghost" type="submit">Save notes</button><button class="btn" type="button" onclick="contactAthlete('${p.clipId}')">Contact</button></div>
+      </form>
+    </article>`).join('')}`;
+}
+
+function setPipeline(id, status) {
+  const p = shortlistOf().find((x) => x.clipId === id);
+  if (!p) return;
+  p.status = status;
+  saveState();
+  render();
+}
+
+function savePipelineNotes(e, id) {
+  e.preventDefault();
+  const p = shortlistOf().find((x) => x.clipId === id);
+  if (!p) return;
+  p.notes = $(`pn-${id}`).value.trim();
+  saveState();
+  toast('Notes saved');
 }
 
 function setRecruiterFilter(kind, value) {
@@ -1119,6 +1318,8 @@ function sendRecruiterMessage(e, id) {
   const body = $('r-msg').value.trim();
   if (!c || !body) return;
   const org = me().recruiter.org;
+  const saved = shortlistOf().find((p) => p.clipId === id);
+  if (saved && saved.status === 'watching') saved.status = 'contacted';
   if (c.owner) {
     addInbox(c.owner, { kind: 'recruiter', from: org, title: `Message from ${org}`, body });
     toast('Message sent to their inbox');

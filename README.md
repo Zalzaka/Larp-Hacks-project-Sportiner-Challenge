@@ -1,8 +1,8 @@
-# Sportiner Crash Course
+# Larplete
 
-Find a tennis or pickleball coach near you and reach your target level fast. Built for the LARP Hacks hackathon, Sportiner subtopic.
+Find a tennis or pickleball coach near you and reach your target level fast. Built for the LARP Hacks hackathon, Larplete subtopic.
 
-> **Branch: `combined`.** Daniel's app is the base, with ideas from ronbilia's `sportiner_app.html` added on top
+> **Branch: `combined`.** Daniel's app is the base, with ideas from ronbilia's `larplete_app.html` added on top
 > (recruiter role, videos for recruiters, coach drills and notes, mobile bottom navigation).
 > The two originals are kept untouched on `daniel-original` and `ronbilia-original`.
 

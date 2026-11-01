@@ -1,5 +1,5 @@
-const STORAGE_KEY = 'sportiner_v4';
-const SESSION_KEY = 'sportiner_session_v4';
+const STORAGE_KEY = 'larplete_v4';
+const SESSION_KEY = 'larplete_session_v4';
 
 // Everything lives in this browser's localStorage. There is no server and no password: sign-in is by email only (demo).
 function freshState() {
@@ -25,9 +25,47 @@ function loadState() {
   return freshState();
 }
 
+// Several tabs can be open at once (student, coach, recruiter), and they all share one localStorage entry.
+// Each tab remembers the last copy it loaded or saved (`baseline`). On save, only the records this tab changed
+// are written; everything else is taken from storage, so one tab does not wipe another tab's changes.
+let baseline = null;
+
+function snapshot(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function mergeRecords(stored, mine, base) {
+  const out = { ...stored };
+  const keys = new Set([...Object.keys(mine), ...Object.keys(base)]);
+  keys.forEach((key) => {
+    if (JSON.stringify(mine[key]) === JSON.stringify(base[key])) return;
+    if (mine[key] === undefined) delete out[key];
+    else out[key] = mine[key];
+  });
+  return out;
+}
+
 function saveState() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    let stored = {};
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) stored = JSON.parse(raw);
+    const base = baseline || freshState();
+    const merged = {
+      accounts: mergeRecords(stored.accounts || {}, state.accounts, base.accounts),
+      threads: mergeRecords(stored.threads || {}, state.threads, base.threads),
+      clips: mergeRecords(
+        Object.fromEntries((stored.clips || []).map((c) => [c.id, c])),
+        Object.fromEntries(state.clips.map((c) => [c.id, c])),
+        Object.fromEntries(base.clips.map((c) => [c.id, c]))
+      ),
+    };
+    merged.clips = Object.values(merged.clips);
+    state.accounts = merged.accounts;
+    state.threads = merged.threads;
+    state.clips = merged.clips;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ accounts: state.accounts, threads: state.threads, clips: state.clips, ui: state.ui }));
+    baseline = snapshot({ accounts: state.accounts, threads: state.threads, clips: state.clips });
   } catch (e) {
     console.warn('Could not save state:', e);
   }
@@ -64,6 +102,7 @@ function resetState() {
 
 let state = loadState();
 let session = readSession();
+baseline = snapshot({ accounts: state.accounts, threads: state.threads, clips: state.clips });
 
 function me() {
   return (session && state.accounts[session]) || null;

@@ -3,7 +3,7 @@
 const AI_MODEL = 'claude-haiku-5-5';
 
 function aiKey() {
-  return (window.SPORTINER_CONFIG && window.SPORTINER_CONFIG.anthropicApiKey) || '';
+  return (window.LARPLETE_CONFIG && window.LARPLETE_CONFIG.anthropicApiKey) || '';
 }
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
