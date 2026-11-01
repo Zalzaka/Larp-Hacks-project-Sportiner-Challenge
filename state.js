@@ -38,9 +38,12 @@ function mergeRecords(stored, mine, base) {
   const out = { ...stored };
   const keys = new Set([...Object.keys(mine), ...Object.keys(base)]);
   keys.forEach((key) => {
-    if (JSON.stringify(mine[key]) === JSON.stringify(base[key])) return;
-    if (mine[key] === undefined) delete out[key];
-    else out[key] = mine[key];
+    const changedHere = JSON.stringify(mine[key]) !== JSON.stringify(base[key]);
+    if (changedHere && mine[key] === undefined) delete out[key];
+    else if (changedHere) out[key] = mine[key];
+    // Keep this tab's own object when it matches storage, so code that is mid-way through an async reply
+    // still writes to the live record and not to a stale copy.
+    else if (mine[key] !== undefined && JSON.stringify(out[key]) === JSON.stringify(mine[key])) out[key] = mine[key];
   });
   return out;
 }
